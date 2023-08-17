@@ -1,0 +1,4 @@
+fileChangeLogs:
+  - service/message.go
+  - simple-demo
+  - test/base_api_test.go
