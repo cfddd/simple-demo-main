@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"github.com/RaymondCode/simple-demo/Handlers"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"path/filepath"
@@ -54,6 +55,6 @@ func PublishList(c *gin.Context) {
 		Response: Response{
 			StatusCode: 0,
 		},
-		VideoList: DemoVideos,
+		VideoList: Handlers.DemoVideos,
 	})
 }

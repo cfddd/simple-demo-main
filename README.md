@@ -24,3 +24,35 @@ test 目录下为不同场景的功能测试case，可用于验证功能实现�
 其中 common.go 中的 _serverAddr_ 为服务部署的地址，默认为本机地址，可以根据实际情况修改
 
 测试数据写在 demo_data.go 中，用于列表接口的 mock 测试
+
+# 安排
+参考https://github.com/ACking-you/byte_douyin_project
+
+后端架构分为三层
+- Handlers
+- Service
+- Models
+
+
+代码只给了接口，也就是Service，对应的就是controller文件加下的目录
+
+- controller
+- Handlers
+- Models
+
+接口注册在了router.go文件
+
+所以我们要做的就是Models，和Handlers
+
+## Models
+很简单，就是数据库表设计的结构体
+
+消息传递的结构体等等
+
+## Handlers
+操作
+
+# 时间
+
+我加了组长群，暂时还没有答辩日期，应该在这个月之内吧
+我们一个星期内爆肝完

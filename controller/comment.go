@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"github.com/RaymondCode/simple-demo/Handlers"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -42,6 +43,6 @@ func CommentAction(c *gin.Context) {
 func CommentList(c *gin.Context) {
 	c.JSON(http.StatusOK, CommentListResponse{
 		Response:    Response{StatusCode: 0},
-		CommentList: DemoComments,
+		CommentList: Handlers.DemoComments,
 	})
 }
