@@ -56,3 +56,45 @@ test 目录下为不同场景的功能测试case，可用于验证功能实现�
 
 我加了组长群，暂时还没有答辩日期，应该在这个月之内吧
 我们一个星期内爆肝完
+
+# 方向
+https://bytedance.feishu.cn/docx/BhEgdmoI3ozdBJxly71cd30vnRc
+社交方向
+# 数据表
+
+```
+video
+-gorm.Model（ID、CreatedAt、UpdatedAt、DeletedAt）
+-author_id                  integer               User视频作者id
+-play_url                     string                 视频播放地址
+-cover_url                   string                 视频封面地址
+-favorite_count           integer               视频的点赞总数
+-comment_count        integer               视频的评论总数
+-title                            string                 视频标题
+ 
+
+comment
+-gorm.Model（ID、CreatedAt、UpdatedAt、DeletedAt）
+-video_id                integer                视频id
+-uesr_id                  integer                用户id
+-content                  string                  评论内容
+
+user
+-gorm.Model（ID、CreatedAt、UpdatedAt、DeletedAt）
+-name                       string                用户名称
+-password                 string                用户密码
+-total_favorited         integer               获赞总数
+-favorite_count         integer               点赞总数
+-article_count          integer                 视频总数
+
+post
+-gorm.Model（ID、CreatedAt、UpdatedAt、DeletedAt）
+-video_id                integer                视频id
+-uesr_id                  integer                用户id
+
+like
+-gorm.Model（ID、CreatedAt、UpdatedAt、DeletedAt）
+-user_id                  integer                用户的id
+-video_id                interger                视频id
+
+```
