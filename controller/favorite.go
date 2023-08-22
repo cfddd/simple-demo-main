@@ -59,17 +59,6 @@ func FavoriteAction(c *gin.Context) {
 
 // FavoriteList all users have same favorite video list
 func FavoriteList(c *gin.Context) {
-
-	var likes1 []models.Like
-
-	for i := 0; i < 2; i++ {
-		likes1 = append(likes1, models.Like{
-			LikeVideo: i,
-		})
-	}
-
-	database.DB.Create(&likes1)
-
 	//参数绑定
 	//user_id获取
 	getUserId, _ := c.Get("user_id")
