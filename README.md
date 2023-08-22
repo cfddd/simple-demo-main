@@ -76,12 +76,13 @@ video
 comment
 -gorm.Model（ID、CreatedAt、UpdatedAt、DeletedAt）
 -video_id                integer                视频id
--uesr_id                  integer                用户id
+-user_id                  integer                用户id
 -content                  string                  评论内容
 
 user
 -gorm.Model（ID、CreatedAt、UpdatedAt、DeletedAt）
 -name                       string                用户名称
+-uuid                       string                  抖音号
 -password                 string                用户密码
 -total_favorited         integer               获赞总数
 -favorite_count         integer               点赞总数
@@ -89,8 +90,8 @@ user
 
 post
 -gorm.Model（ID、CreatedAt、UpdatedAt、DeletedAt）
--video_id                integer                视频id
 -uesr_id                  integer                用户id
+-video_id                integer                视频id
 
 like
 -gorm.Model（ID、CreatedAt、UpdatedAt、DeletedAt）
