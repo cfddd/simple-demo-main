@@ -1,8 +1,7 @@
-package main
+package database
 
 import (
 	"fmt"
-	"github.com/RaymondCode/simple-demo/models"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -10,12 +9,12 @@ import (
 var DB *gorm.DB
 
 func init() {
-	username := "root"      //用户名
-	password := "Wuwang222" //密码
-	host := "127.0.0.1"     //数据库地址，可以是IP或者域名
-	port := 3306            //端口号
-	Dbname := "douyin"      //数据库名
-	timeout := "10s"        //超时连接，10秒
+	username := "root"   //用户名
+	password := "123456" //密码
+	host := "127.0.0.1"  //数据库地址，可以是IP或者域名
+	port := 3306         //端口号
+	Dbname := "douyin"   //数据库名
+	timeout := "10s"     //超时连接，10秒
 
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local&timeout=%s", username, password, host, port, Dbname, timeout)
 
@@ -28,6 +27,6 @@ func init() {
 	DB = db
 }
 
-func main() {
-	DB.Debug().AutoMigrate(&models.Video{}, &models.Comment{}, models.User{}, &models.Like{}, &models.Post{})
-}
+//func main() {
+//	DB.Debug().AutoMigrate(&models.Video{}, &models.Comment{}, models.User{}, &models.Like{}, &models.Post{})
+//}

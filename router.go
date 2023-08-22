@@ -20,8 +20,8 @@ func initRouter(r *gin.Engine) {
 	apiRouter.GET("/publish/list/", controller.PublishList) //必写，个人页面显示所有作品
 
 	// extra apis - I
-	apiRouter.POST("/favorite/action/", controller.FavoriteAction) //必写，个人页面显示所有喜欢的作品
-	apiRouter.GET("/favorite/list/", controller.FavoriteList)      //必写，点赞调用该接口
+	apiRouter.POST("/favorite/action/", controller.FavoriteAction) //必写，点赞调用该接口
+	apiRouter.GET("/favorite/list/", controller.FavoriteList)      //必写，个人页面显示所有喜欢的作品
 	apiRouter.POST("/comment/action/", controller.CommentAction)   //必写，提交评论调用该接口
 	apiRouter.GET("/comment/list/", controller.CommentList)        //必写，打开评论区显示所有评论
 
