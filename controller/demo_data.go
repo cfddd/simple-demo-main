@@ -1,8 +1,6 @@
-package Handlers
+package controller
 
-import "github.com/RaymondCode/simple-demo/controller"
-
-var DemoVideos = []controller.Video{
+var DemoVideos = []Video{
 	{
 		Id:            1,
 		Author:        DemoUser,
@@ -14,7 +12,7 @@ var DemoVideos = []controller.Video{
 	},
 }
 
-var DemoComments = []controller.Comment{
+var DemoComments = []Comment{
 	{
 		Id:         1,
 		User:       DemoUser,
@@ -23,7 +21,7 @@ var DemoComments = []controller.Comment{
 	},
 }
 
-var DemoUser = controller.User{
+var DemoUser = User{
 	Id:            1,
 	Name:          "TestUser",
 	FollowCount:   0,

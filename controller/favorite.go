@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"github.com/RaymondCode/simple-demo/Handlers"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -23,6 +22,6 @@ func FavoriteList(c *gin.Context) {
 		Response: Response{
 			StatusCode: 0,
 		},
-		VideoList: Handlers.DemoVideos,
+		VideoList: DemoVideos,
 	})
 }

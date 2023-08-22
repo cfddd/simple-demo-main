@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"github.com/RaymondCode/simple-demo/Handlers"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
@@ -17,7 +16,7 @@ type FeedResponse struct {
 func Feed(c *gin.Context) {
 	c.JSON(http.StatusOK, FeedResponse{
 		Response:  Response{StatusCode: 0},
-		VideoList: Handlers.DemoVideos,
+		VideoList: DemoVideos,
 		NextTime:  time.Now().Unix(),
 	})
 }
