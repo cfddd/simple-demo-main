@@ -1,10 +1,12 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"github.com/RaymondCode/simple-demo/global"
+)
 
 type Video struct {
-	gorm.Model
-	AuthorID      int       `json:"authorID"`      //User视频作者id
+	global.PRE_MODEL
+	VideoCreator  int       `json:"video_creator"` //User视频作者id
 	PlayUrl       string    `json:"playUrl"`       //视频播放地址
 	CoverUrl      string    `json:"coverUrl"`      //视频封面地址
 	FavoriteCount int       `json:"favoriteCount"` //视频的点赞总数

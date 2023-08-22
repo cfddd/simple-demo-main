@@ -60,42 +60,116 @@ test 目录下为不同场景的功能测试case，可用于验证功能实现�
 # 方向
 https://bytedance.feishu.cn/docx/BhEgdmoI3ozdBJxly71cd30vnRc
 社交方向
-# 数据表
 
+
+# 表结构
+## 全局模型
+```go
+type PRE_MODEL struct {
+	ID        uint           `gorm:"primarykey"` // 主键ID
+	CreatedAt time.Time      // 创建时间
+	UpdatedAt time.Time      // 更新时间
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"` // 删除时间
+}
 ```
-video
--gorm.Model（ID、CreatedAt、UpdatedAt、DeletedAt）
--author_id                  integer               User视频作者id
--play_url                     string                 视频播放地址
--cover_url                   string                 视频封面地址
--favorite_count           integer               视频的点赞总数
--comment_count        integer               视频的评论总数
--title                            string                 视频标题
+
+## 表模型
+
+**video** 用来存储和视屏相关的数据
+```go
+type Video struct {
+	global.PRE_MODEL
+	VideoCreator  int       `json:"video_creator"` //User视频作者id
+	PlayUrl       string    `json:"playUrl"`       //视频播放地址
+	CoverUrl      string    `json:"coverUrl"`      //视频封面地址
+	FavoriteCount int       `json:"favoriteCount"` //视频的点赞总数
+	CommentCount  int       `json:"commentCount"`  //视频的评论总数
+	Title         string    `json:"title"`         //视频标题
+	Comments      []Comment `json:"comments"`      //用户评论列表
+}
+```
+**comment** 用来存储和评论相关的数据
+```go
+type Comment struct {
+	global.PRE_MODEL
+	VideoID    uint   `json:"videoID"`     //外键视频id
+	ReviewUser int    `json:"review_user"` //评论用户id
+	Content    string `json:"content"`     //评论内容
+}
+```
+**user** 用来存储用户信息相关的数据
+```go
+type User struct {
+	global.PRE_MODEL
+	DouyinNum     string `json:"douyin_num"` //抖音号
+	Name          string `json:"name"`
+	Password      string `json:"password"`
+	TotalFavorite int    `json:"totalFavorite"` //获赞总数
+	FavoriteCount int    `json:"favoriteCount"` //点赞总数
+	ArticleCount  int    `json:"articleCount"`  //视频总数
+	Likes         []Like `json:"likes"`         //喜欢列表
+	Posts         []Post `json:"posts"`         //作评列表
+}
+```
+
+**post** 用来存储和用户作品相关的数据
+```go
+type Post struct {
+	global.PRE_MODEL
+	UserID       uint `json:"userID"`        //外键用户的id
+	CreatedVideo int  `json:"created_video"` //视频id
+}
+```
+
+**like** 用来存储用户的喜欢
+```go
+type Like struct {
+	global.PRE_MODEL
+	UserID    uint `json:"userID"`     //外键用户的id
+	LikeVideo int  `json:"like_video"` //视频id
+}
+```
+
+我们使用的是 mysql 数据库， 并使用 GORM 来进行表的创建：
+```go
+DB.AutoMigrate(&models.Video{}, &models.Comment{}, models.User{}, &models.Like{}, &models.Post{})
+```
+
+## 表数据
+```
+videos
+-global.PRE_MODEL（ID、CreatedAt、UpdatedAt、DeletedAt）
+-video_creator              integer                User视频作者id
+-play_url                   string                 视频播放地址
+-cover_url                  string                 视频封面地址
+-favorite_count             integer                视频的点赞总数
+-comment_count              integer                视频的评论总数
+-title                      string                 视频标题
  
+comments
+-global.PRE_MODEL（ID、CreatedAt、UpdatedAt、DeletedAt）
+-video_id                   integer                视频id
+-review_user                integer                用户id
+-content                    string                 评论内容
 
-comment
--gorm.Model（ID、CreatedAt、UpdatedAt、DeletedAt）
--video_id                integer                视频id
--user_id                  integer                用户id
--content                  string                  评论内容
+users
+-global.PRE_MODEL（ID、CreatedAt、UpdatedAt、DeletedAt）
+-name                       string                 用户名称
+-douyin_num                 string                 抖音号
+-password                   string                 用户密码
+-total_favorited            integer                获赞总数
+-favorite_count             integer                点赞总数
+-article_count              integer                视频总数
 
-user
--gorm.Model（ID、CreatedAt、UpdatedAt、DeletedAt）
--name                       string                用户名称
--uuid                       string                  抖音号
--password                 string                用户密码
--total_favorited         integer               获赞总数
--favorite_count         integer               点赞总数
--article_count          integer                 视频总数
+posts
+-global.PRE_MODEL（ID、CreatedAt、UpdatedAt、DeletedAt）
+-uesr_id                    integer                用户id
+-like_video                 integer                视频id
 
-post
--gorm.Model（ID、CreatedAt、UpdatedAt、DeletedAt）
--uesr_id                  integer                用户id
--video_id                integer                视频id
-
-like
--gorm.Model（ID、CreatedAt、UpdatedAt、DeletedAt）
--user_id                  integer                用户的id
--video_id                interger                视频id
-
+likes
+-global.PRE_MODEL（ID、CreatedAt、UpdatedAt、DeletedAt）
+-user_id                    integer                用户的id
+-created_video              interger               视频id
 ```
+
+数据库关系图

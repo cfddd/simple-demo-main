@@ -1,10 +1,12 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"github.com/RaymondCode/simple-demo/global"
+)
 
 type Comment struct {
-	gorm.Model
-	VideoID int    `json:"videoID"` //外键视频id
-	Uid     int    `json:"uid"`     //评论用户id
-	Content string `json:"content"` //评论内容
+	global.PRE_MODEL
+	VideoID    uint   `json:"videoID"`     //外键视频id
+	ReviewUser int    `json:"review_user"` //评论用户id
+	Content    string `json:"content"`     //评论内容
 }

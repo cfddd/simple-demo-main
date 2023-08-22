@@ -4,7 +4,7 @@ import "github.com/RaymondCode/simple-demo/global"
 
 type User struct {
 	global.PRE_MODEL
-	Uuid          string `json:"uuid"` //抖音号
+	DouyinNum     string `json:"douyin_num"` //抖音号
 	Name          string `json:"name"`
 	Password      string `json:"password"`
 	TotalFavorite int    `json:"totalFavorite"` //获赞总数
