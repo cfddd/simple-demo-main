@@ -1,17 +1,18 @@
 package controller
 
 import (
+	"github.com/RaymondCode/simple-demo/common"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
 type CommentListResponse struct {
-	Response
+	common.Response
 	CommentList []Comment `json:"comment_list,omitempty"`
 }
 
 type CommentActionResponse struct {
-	Response
+	common.Response
 	Comment Comment `json:"comment,omitempty"`
 }
 
@@ -23,7 +24,7 @@ func CommentAction(c *gin.Context) {
 	if user, exist := usersLoginInfo[token]; exist {
 		if actionType == "1" {
 			text := c.Query("comment_text")
-			c.JSON(http.StatusOK, CommentActionResponse{Response: Response{StatusCode: 0},
+			c.JSON(http.StatusOK, CommentActionResponse{Response: common.Response{StatusCode: 0},
 				Comment: Comment{
 					Id:         1,
 					User:       user,
@@ -32,16 +33,16 @@ func CommentAction(c *gin.Context) {
 				}})
 			return
 		}
-		c.JSON(http.StatusOK, Response{StatusCode: 0})
+		c.JSON(http.StatusOK, common.Response{StatusCode: 0})
 	} else {
-		c.JSON(http.StatusOK, Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
+		c.JSON(http.StatusOK, common.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
 	}
 }
 
 // CommentList all videos have same demo comment list
 func CommentList(c *gin.Context) {
 	c.JSON(http.StatusOK, CommentListResponse{
-		Response:    Response{StatusCode: 0},
+		Response:    common.Response{StatusCode: 0},
 		CommentList: DemoComments,
 	})
 }

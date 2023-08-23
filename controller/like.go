@@ -1,17 +1,12 @@
 package controller
 
 import (
-	"github.com/RaymondCode/simple-demo/models"
+	"github.com/RaymondCode/simple-demo/common"
 	"github.com/RaymondCode/simple-demo/service"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
 )
-
-type LikeListResponse struct {
-	Response
-	VideoList []models.Video `json:"video_list,omitempty"`
-}
 
 // FavoriteAction no practical effect, just check if token is valid(点赞按键)
 func FavoriteAction(c *gin.Context) {
@@ -32,12 +27,12 @@ func FavoriteAction(c *gin.Context) {
 	//函数调用及响应
 	err := service.FavoriteAction(userId, uint(videoId))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, Response{
+		c.JSON(http.StatusBadRequest, common.Response{
 			StatusCode: 1,
 			StatusMsg:  err.Error(),
 		})
 	} else {
-		c.JSON(http.StatusOK, Response{
+		c.JSON(http.StatusOK, common.Response{
 			StatusCode: 0,
 			StatusMsg:  "操作成功！",
 		})
@@ -67,16 +62,16 @@ func FavoriteList(c *gin.Context) {
 	videoList, err := service.GetLikeList(userIdNew)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, LikeListResponse{
-			Response: Response{
+		c.JSON(http.StatusBadRequest, common.LikeListResponse{
+			Response: common.Response{
 				StatusCode: 1,
 				StatusMsg:  "查找列表失败！",
 			},
 			VideoList: nil,
 		})
 	} else {
-		c.JSON(http.StatusOK, LikeListResponse{
-			Response: Response{
+		c.JSON(http.StatusOK, common.LikeListResponse{
+			Response: common.Response{
 				StatusCode: 0,
 				StatusMsg:  "已找到列表！",
 			},
