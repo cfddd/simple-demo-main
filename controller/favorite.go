@@ -30,14 +30,14 @@ func FavoriteAction(c *gin.Context) {
 	videoId, _ := strconv.ParseUint(videoIdStr, 10, 10)
 
 	//函数调用及响应
-	err := service.FavoriteAction(userId, uint(videoId), uint(actionType))
+	err := service.FavoriteAction(userId, uint(videoId))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, common.Response{
+		c.JSON(http.StatusBadRequest, Response{
 			StatusCode: 1,
 			StatusMsg:  err.Error(),
 		})
 	} else {
-		c.JSON(http.StatusOK, common.Response{
+		c.JSON(http.StatusOK, Response{
 			StatusCode: 0,
 			StatusMsg:  "操作成功！",
 		})
