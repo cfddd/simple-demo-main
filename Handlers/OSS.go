@@ -3,25 +3,37 @@ package Handlers
 import (
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"mime/multipart"
-	"os"
 )
 
-var (
-	client, _ = oss.New("oss-cn-beijing.aliyuncs.com", "LTAI5t7Sm8h5LBiy6jCuNQ3B", "C45iWvAfDPxwDh7u5lmS4O65PpKCmr")
-	bucket, _ = client.Bucket("cfddfc")
-)
-
-// getFileUrlByName
-func getFileUrlByName(name string) string {
-	return "https://cfddfc.oss-cn-beijing.aliyuncs.com/" + name
+// getVideoUrlByName
+func getVideoUrlByName(name string) string {
+	return "https://cfddfc.oss-cn-beijing.aliyuncs.com/rubish/" + name
 }
 
-// uploadVideo
-// 同时返回url和err
-func uploadVideo(finalName string, file *multipart.FileHeader) (url string, err error) {
-	err = bucket.PutObject("public/"+finalName, file)
+// UploadVideo
+// 返回err
+func UploadVideo(finalName string, file *multipart.FileHeader) (err error) {
+
+	client, err := oss.New("oss-cn-beijing.aliyuncs.com", "LTAI5t7Sm8h5LBiy6jCuNQ3B", "C45iWvAfDPxwDh7u5lmS4O65PpKCmr")
 	if err != nil {
-		os.Exit(-1)
+		return err
 	}
-	return url, file.Key
+
+	bucket, err := client.Bucket("cfddfc")
+	if err != nil {
+		return err
+	}
+
+	src, err := file.Open()
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+
+	err = bucket.PutObject("public/"+finalName, src)
+	if err != nil {
+		return err
+	}
+
+	return err
 }

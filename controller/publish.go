@@ -31,6 +31,12 @@ func Publish(c *gin.Context) {
 	finalName := fmt.Sprintf("%d_%s", user.Id, filename)
 	saveFile := filepath.Join("./public/", finalName)
 
+	// todo
+	//err = Handlers.UploadVideo(finalName, data)
+	//if err != nil {
+	//	fmt.Println("err:", err)
+	//}
+
 	if err := c.SaveUploadedFile(data, saveFile); err != nil {
 		c.JSON(http.StatusOK, common.Response{
 			StatusCode: 1,
