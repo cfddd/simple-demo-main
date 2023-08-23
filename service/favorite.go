@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// userId的点赞总数favorite_count增加
+// 增加用户的点赞总数
 func AddFavoriteCount(HostId uint) error {
 	if err := database.DB.Model(&models.User{}).
 		Where("id=?", HostId).
@@ -16,7 +16,7 @@ func AddFavoriteCount(HostId uint) error {
 	return nil
 }
 
-// 当前视频被点赞的用户的被点赞总数total_favorite增加
+// 增加视频作者的被点赞总数
 func AddTotalFavorited(HostId uint) error {
 	if err := database.DB.Model(&models.User{}).
 		Where("id=?", HostId).
@@ -26,9 +26,29 @@ func AddTotalFavorited(HostId uint) error {
 	return nil
 }
 
+// 减少用户的点赞总数
+func SubtractFavoriteCount(userId uint) error {
+	if err := database.DB.Table("users").
+		Where("id = ?", userId).
+		Update("favorite_count", gorm.Expr("favorite_count - 1")).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+// 减少视频作者的被点赞总数
+func SubtractTotalFavorited(userId uint) error {
+	if err := database.DB.Table("users").
+		Where("id = ?", userId).
+		Update("total_favorite", gorm.Expr("total_favorite - 1")).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
 // 点赞
 // FavoriteAction 点赞操作
-func FavoriteAction(userId uint, likevideo int) (err error) {
+func FavoriteAction(userId uint, likevideo uint) (err error) {
 	// 点赞
 	giveLike := models.Like{
 		UserID:    userId,
@@ -58,27 +78,31 @@ func FavoriteAction(userId uint, likevideo int) (err error) {
 			return err
 		}
 
-	} else { //存在
-		if favoriteExist.State == 0 { //state为0-video的favorite_count加1
-			dao.SqlSession.Table("videos").Where("id = ?", videoId).Update("favorite_count", gorm.Expr("favorite_count + 1"))
-			dao.SqlSession.Table("favorites").Where("video_id = ?", videoId).Update("state", 1)
-			//userId的favorite_count增加
-			if err := AddFavoriteCount(userId); err != nil {
-				return err
-			}
-			//videoId对应的userId的total_favorite增加
-			GuestId, err := GetVideoAuthor(videoId)
-			if err != nil {
-				return err
-			}
-			if err := AddTotalFavorited(GuestId); err != nil {
-				return err
-			}
+	} else { //如果红心存在那就是取消点赞
+		// 删除点赞记录
+		if err := database.DB.Table("likes").Where("user_id = ? AND video_id = ?", userId, likevideo).Delete(&models.Like{}).Error; err != nil {
+			return err
 		}
-		//state为1-video的favorite_count不变
-		return nil
-	}
 
+		// 更新视频的 favorite_count
+		if err := database.DB.Table("videos").Where("id = ?", likevideo).Update("favorite_count", gorm.Expr("favorite_count - 1")).Error; err != nil {
+			return err
+		}
+
+		// userId 的点赞总数 favorite_count 减少
+		if err := SubtractFavoriteCount(userId); err != nil {
+			return err
+		}
+
+		// 当前视频被点赞的用户的被点赞总数 total_favorite 减少
+		guestId, err := GetVideoAuthor(likeVideo)
+		if err != nil {
+			return err
+		}
+		if err := SubtractTotalFavorited(guestId); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
