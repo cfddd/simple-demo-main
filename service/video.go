@@ -48,10 +48,10 @@ func findVideo(id uint) (u models.Video, err error) {
 //@param: id uint
 //@return: models.Video,err error
 
-func GetVideoAuthor(videoId uint) (int, error) {
+func GetVideoAuthor(videoId uint) (uint, error) {
 	var video models.Video
 	if err := database.DB.Table("videos").Where("id = ?", videoId).Find(&video).Error; err != nil {
-		return -1, err
+		return 0, err
 	}
 	return video.VideoCreator, nil
 }

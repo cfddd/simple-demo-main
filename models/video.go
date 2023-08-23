@@ -6,7 +6,7 @@ import (
 
 type Video struct {
 	global.PRE_MODEL
-	VideoCreator  int       `json:"video_creator"` //User视频作者id
+	VideoCreator  uint      `json:"video_creator"` //User视频作者id
 	PlayUrl       string    `json:"playUrl"`       //视频播放地址
 	CoverUrl      string    `json:"coverUrl"`      //视频封面地址
 	FavoriteCount int       `json:"favoriteCount"` //视频的点赞总数

@@ -2,13 +2,15 @@ package database
 
 import (
 	"fmt"
+	"github.com/RaymondCode/simple-demo/models"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
 var DB *gorm.DB
 
-func init() {
+func Init() {
+
 	username := "root"   //用户名
 	password := "123456" //密码
 	host := "127.0.0.1"  //数据库地址，可以是IP或者域名
@@ -25,6 +27,8 @@ func init() {
 	}
 
 	DB = db
+	DB.Debug().AutoMigrate(&models.Video{}, &models.Comment{}, models.User{}, &models.Like{}, &models.Post{})
+
 }
 
 //func main() {

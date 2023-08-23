@@ -70,7 +70,7 @@ func FavoriteAction(userId uint, likevideo uint) (err error) {
 		}
 
 		// 当前视频被点赞的用户的被点赞总数total_favorite增加
-		GuestId, err := GetVideoAuthor(videoId)
+		GuestId, err := GetVideoAuthor(likevideo)
 		if err != nil {
 			return err
 		}
@@ -95,7 +95,7 @@ func FavoriteAction(userId uint, likevideo uint) (err error) {
 		}
 
 		// 当前视频被点赞的用户的被点赞总数 total_favorite 减少
-		guestId, err := GetVideoAuthor(likeVideo)
+		guestId, err := GetVideoAuthor(likevideo)
 		if err != nil {
 			return err
 		}

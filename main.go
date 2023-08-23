@@ -1,12 +1,14 @@
 package main
 
 import (
-	"github.com/RaymondCode/simple-demo/service"
+	"github.com/RaymondCode/simple-demo/database"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	go service.RunMessageServer()
+	//go service.RunMessageServer()
+
+	database.Init()
 
 	r := gin.Default()
 
