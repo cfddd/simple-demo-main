@@ -18,7 +18,7 @@ func OperateUserFavoriteCount(HostId uint, cnt int) error {
 func OperateCreatorTotalFavorited(HostId uint, cnt int) error {
 	err := database.DB.Model(&models.User{}).
 		Where("id=?", HostId).
-		Update("total_favorited", gorm.Expr("total_favorited+?", cnt)).Error
+		Update("total_favorite", gorm.Expr("total_favorite+?", cnt)).Error
 	return err
 }
 
@@ -26,8 +26,9 @@ func OperateCreatorTotalFavorited(HostId uint, cnt int) error {
 func LikeExit(userId uint, videoId uint) bool {
 	var likeExist = &models.Like{} //找不到时会返回错误
 	result := database.DB.Table("likes").
-		Where("user_id = ? AND like_video = ?", userId, videoId).First(&likeExist)
-	return result.Error != nil // 找不到即不存在
+		Where("user_id = ? AND like_video = ?", userId, videoId).First(&likeExist).Error
+
+	return result != nil // 找不到即不存在
 }
 
 // 在数据库中创建一条喜欢记录
@@ -47,7 +48,7 @@ func OperateVideoFavorite_count(videoId uint, cnt int) error {
 // 在数据库中删除一条喜欢记录
 func DeleteLike(like models.Like) error {
 	err := database.DB.Table("likes").
-		Where("user_id = ? AND video_id = ?", like.UserID, like.LikeVideo).
+		Where("user_id = ? AND like_video = ?", like.UserID, like.LikeVideo).
 		Delete(&models.Like{}).Error
 	return err
 }
@@ -55,6 +56,15 @@ func DeleteLike(like models.Like) error {
 // 查询当前id用户的所有点赞信息
 func GetLikeList(userId uint) ([]models.Like, error) {
 	var likeList []models.Like
-	err := database.DB.Table("likes").Where("user_id=?", userId).Find(&likeList).Error
+	err := database.DB.Table("likes").
+		Where("user_id=?", userId).Find(&likeList).Error
+	return likeList, err
+}
+
+// 查询当前id用户的所有点赞信息（在事务中执行）
+func GetLikeListInTransaction(tx *gorm.DB, userId uint) ([]models.Like, error) {
+	var likeList []models.Like
+	err := tx.Table("likes").
+		Where("user_id=?", userId).Find(&likeList).Error
 	return likeList, err
 }

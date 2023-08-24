@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/RaymondCode/simple-demo/database"
 	"github.com/RaymondCode/simple-demo/models"
+	"gorm.io/gorm"
 )
 
 //@function: addVideo
@@ -41,6 +42,13 @@ func UpdateVideo(id uint, content models.Video) (err error) {
 func FindVideo(id uint) (u models.Video, err error) {
 	err = database.DB.Where("id = ?", id).First(&u).Error
 	return
+}
+
+// 根据视频ID查找对应视频信息（在事务中执行）
+func FindVideoInTransaction(tx *gorm.DB, id uint) (models.Video, error) {
+	var video models.Video
+	err := tx.Where("id = ?", id).First(&video).Error
+	return video, err
 }
 
 //@function: GetVideoAuthor

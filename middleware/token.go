@@ -98,8 +98,10 @@ func VerifyUserLogin() gin.HandlerFunc {
 			return
 		}
 
-		//c.Set("username", token.UserName)
-		//c.Set("user_id", token.UserID)
+		//设置上下文的用户信息
+		c.Set("username", token.UserName)
+		c.Set("user_id", token.UserID)
+
 		//c.Next()
 	}
 }

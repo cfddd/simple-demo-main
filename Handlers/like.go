@@ -74,9 +74,10 @@ func FavoriteAction(userId uint, videoId uint) (err error) {
 }
 
 // 从数据库查询喜欢列表
-func GetLikeList(userId uint) ([]models.Video, error) {
+func GetLikeList(videoId uint) ([]models.Video, error) {
+
 	// 查询当前id用户的所有点赞信息
-	likeList, _ := service.GetLikeList(userId)
+	likeList, _ := service.GetLikeList(videoId)
 
 	var videoList []models.Video
 	// 根据点赞信息，查找对应的视频信息
@@ -87,3 +88,34 @@ func GetLikeList(userId uint) ([]models.Video, error) {
 	}
 	return videoList, nil
 }
+
+//func GetLikeListWithTransaction(userId uint) ([]models.Video, error) {
+//	// 开始事务
+//	tx := database.DB.Begin()
+//
+//	// 查询当前id用户的所有点赞信息（在事务中执行）
+//	likeList, err := service.GetLikeListInTransaction(tx, userId)
+//	if err != nil {
+//		tx.Rollback()
+//		return nil, err
+//	}
+//
+//	var videoList []models.Video
+//	// 根据点赞信息，查找对应的视频信息（在事务中执行）
+//	for _, like := range likeList {
+//		video, err := service.FindVideoInTransaction(tx, like.LikeVideo)
+//		if err != nil {
+//			tx.Rollback()
+//			return nil, err
+//		}
+//		videoList = append(videoList, video)
+//	}
+//
+//	// 提交事务
+//	if err := tx.Commit().Error; err != nil {
+//		tx.Rollback()
+//		return nil, err
+//	}
+//
+//	return videoList, nil
+//}
