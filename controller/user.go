@@ -32,14 +32,12 @@ func Register(c *gin.Context) {
 	username := c.Query("username")
 	password := c.Query("password")
 
-	//token := username + password
-
 	//用户已经存在
-	if exist, _ := service.UserExist(username); exist {
+	if _, exist := Handlers.UserExist(username); exist {
 		c.JSON(http.StatusOK, common.UserRegisterResponse{
 			Response: common.Response{
 				StatusCode: 1,
-				StatusMsg:  "user already exist",
+				StatusMsg:  "用户已经存在",
 			},
 		})
 		return
@@ -60,7 +58,7 @@ func Register(c *gin.Context) {
 	c.JSON(http.StatusOK, common.UserRegisterResponse{
 		Response: common.Response{
 			StatusCode: 0,
-			StatusMsg:  "user registration successful",
+			StatusMsg:  "注册成功",
 		},
 		UserResponse: userResponse,
 	})

@@ -1,8 +1,10 @@
 package Handlers
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"github.com/RaymondCode/simple-demo/common"
-	"github.com/RaymondCode/simple-demo/global"
+	"github.com/RaymondCode/simple-demo/middleware"
 	"github.com/RaymondCode/simple-demo/models"
 	"github.com/RaymondCode/simple-demo/service"
 	"golang.org/x/crypto/bcrypt"
@@ -16,13 +18,14 @@ func UserRegister(username, password string) (common.UserResponse, error) {
 	}
 
 	//将用户加入数据库，并获取用户数据库的信息
-	user, err := service.UserAdd(username, passwordHashed)
+	douyinNum := hashUsername(username)
+	user, err := service.UserAdd(douyinNum, username, passwordHashed)
 	if err != nil {
 		return common.UserResponse{}, err
 	}
 
 	//获取token
-	token, err := global.CreateTokenUsingHs256(user.ID, user.Name)
+	token, err := middleware.CreateTokenUsingHs256(user.ID, user.Name)
 	if err != nil {
 		return common.UserResponse{}, err
 	}
@@ -34,6 +37,15 @@ func UserRegister(username, password string) (common.UserResponse, error) {
 	return userResponse, nil
 }
 
+// UserExist 判断用户是否存在,存在为真，不存在为假，并返回该用户
+func UserExist(username string) (models.User, bool) {
+	user, err := service.UseFind(username)
+	if err != nil {
+		return user, false
+	}
+	return user, true
+}
+
 // PasswordHash 用户密码加密函数
 func PasswordHash(password string) (string, error) {
 	//对密码进行哈希处理
@@ -42,6 +54,13 @@ func PasswordHash(password string) (string, error) {
 		return "", err
 	}
 	return string(PasswordHashed), nil
+}
+
+// 将ID哈希处理当作抖音号
+func hashUsername(username string) string {
+	hash := sha256.New()
+	hash.Write([]byte(username))
+	return hex.EncodeToString(hash.Sum(nil))
 }
 
 // 将用户信息转换成前端格式的用户信息
