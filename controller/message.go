@@ -30,6 +30,7 @@ func MessageAction(c *gin.Context) {
 		chatKey := genChatKey(user.Id, int64(userIdB))
 
 		atomic.AddInt64(&messageIdSequence, 1)
+
 		curMessage := Message{
 			Id:         messageIdSequence,
 			Content:    content,
