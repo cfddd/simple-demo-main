@@ -42,7 +42,7 @@ func FavoriteAction(c *gin.Context) {
 
 // FavoriteList all users have same favorite video list(用户喜欢列表)
 func FavoriteList(c *gin.Context) {
-	//user_id获取
+	// user_id获取
 	// Get方法可能是从某种上下文中获取键值对的值
 	getUserId, _ := c.Get("user_id")
 	var userIdHost uint
