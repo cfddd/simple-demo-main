@@ -208,3 +208,21 @@ likes
 >controller层调用Handlers层
 >
 >Handlers层调用Service层
+
+## 添加一个环境变量
+ffmpeg
+值为ffmpeg.exe的绝对路径
+## 封面获取
+先把视频存到本地，再调用ffmpeg得到图片文件，然后上传
+因为ffmpeg.input只能是本地的文件
+
+## videoPublish 
+基本功能完成
+/douyin/publish/action/ - 视频投稿
+登录用户选择视频上传。
+
+使用了ffmpeg把上传视频的第1帧作为视频封面
+然后把视频和图片先暂存在本地public下，再上传到阿里云OSS
+视频的名称就是user.Id+filename
+封面名称就是user.Id+filename+.png
+例如test.mp4,封面是test.mp4/png
