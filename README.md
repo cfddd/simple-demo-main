@@ -183,3 +183,10 @@ likes
 
 我们使用了 bcrypt 算法对密码进行哈希和加盐处理，这是一种常见且安全的方式。
 
+
+# 架构
+
+这三层按照这样的顺序调用：
+>controller层调用Handlers层
+>
+>Handlers层调用Service层
