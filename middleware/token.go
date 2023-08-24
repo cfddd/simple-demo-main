@@ -71,7 +71,7 @@ func VerifyUserLogin() gin.HandlerFunc {
 		if tokenString == "" {
 			c.JSON(http.StatusOK, common.Response{
 				StatusCode: 401,
-				StatusMsg:  "user does not exist",
+				StatusMsg:  "用户不存在",
 			})
 			c.Abort() //拦截
 			return
@@ -82,7 +82,7 @@ func VerifyUserLogin() gin.HandlerFunc {
 		if err != nil {
 			c.JSON(http.StatusOK, common.Response{
 				StatusCode: 403,
-				StatusMsg:  "token invalid",
+				StatusMsg:  "验证失败",
 			})
 			c.Abort() //拦截
 			return
@@ -92,7 +92,7 @@ func VerifyUserLogin() gin.HandlerFunc {
 		if token.ExpiresAt < time.Now().Unix() {
 			c.JSON(http.StatusOK, common.Response{
 				StatusCode: 402,
-				StatusMsg:  "token expired",
+				StatusMsg:  "令牌过期",
 			})
 			c.Abort() //拦截
 			return
