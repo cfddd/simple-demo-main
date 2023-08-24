@@ -10,7 +10,7 @@ import (
 //@param: u models.video
 //@return: err error
 
-func addVideo(u models.Video) (err error) {
+func AddVideo(u models.Video) (err error) {
 	return database.DB.Create(&u).Error
 
 }
@@ -20,7 +20,7 @@ func addVideo(u models.Video) (err error) {
 //@param: id uint
 //@return: err error
 
-func deleteVideo(id uint) (err error) {
+func DeleteVideo(id uint) (err error) {
 	return database.DB.Where("id = ?", id).Delete(&models.Video{}).Error
 }
 
@@ -29,7 +29,7 @@ func deleteVideo(id uint) (err error) {
 //@param: id uint, content models.Video
 //@return: err error
 
-func updateVideo(id uint, content models.Video) (err error) {
+func UpdateVideo(id uint, content models.Video) (err error) {
 	return database.DB.Model(&models.Video{}).Where("id = ?", id).Update("content", content).Error
 }
 
@@ -38,7 +38,7 @@ func updateVideo(id uint, content models.Video) (err error) {
 //@param: id uint
 //@return: models.Video,err error
 
-func findVideo(id uint) (u models.Video, err error) {
+func FindVideo(id uint) (u models.Video, err error) {
 	err = database.DB.Where("id = ?", id).First(&u).Error
 	return
 }

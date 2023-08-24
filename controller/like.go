@@ -3,7 +3,6 @@ package controller
 import (
 	"github.com/RaymondCode/simple-demo/Handlers"
 	"github.com/RaymondCode/simple-demo/common"
-	"github.com/RaymondCode/simple-demo/service"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -26,7 +25,7 @@ func FavoriteAction(c *gin.Context) {
 	videoId, _ := strconv.ParseUint(videoIdStr, 10, 10)
 
 	//函数调用及响应
-	err := service.FavoriteAction(userId, uint(videoId))
+	err := Handlers.FavoriteAction(userId, uint(videoId))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, common.Response{
 			StatusCode: 1,
@@ -60,7 +59,7 @@ func FavoriteList(c *gin.Context) {
 	}
 
 	//函数调用及响应
-	videoList, err := service.GetLikeList(userIdNew)
+	videoList, err := Handlers.GetLikeList(userIdNew)
 
 	// 转换成前端格式的video
 	var front_videoList []common.Video
