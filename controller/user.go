@@ -20,13 +20,6 @@ var usersLoginInfo = map[string]common.User{
 	//},
 }
 
-//var userIdSequence = int64(1)
-
-//type UserResponse struct {
-//	Response
-//	User User `json:"user"`
-//}
-
 func Register(c *gin.Context) {
 	username := c.Query("username")
 	password := c.Query("password")
@@ -48,7 +41,7 @@ func Register(c *gin.Context) {
 		c.JSON(http.StatusOK, common.UserRegisterResponse{
 			Response: common.Response{
 				StatusCode: 1,
-				StatusMsg:  err.Error(),
+				StatusMsg:  "注册失败",
 			},
 		})
 		return
@@ -61,50 +54,52 @@ func Register(c *gin.Context) {
 		},
 		UserResponse: userResponse,
 	})
-
-	//atomic.AddInt64(&userIdSequence, 1)
-	//newUser := User{
-	//	Id:   userIdSequence,
-	//	Name: username,
-	//}
-	//usersLoginInfo[token] = newUser
-	//c.JSON(http.StatusOK, UserLoginResponse{
-	//	Response: Response{StatusCode: 0},
-	//	UserId:   userIdSequence,
-	//	Token:    username + password,
-	//})
 }
 
 func Login(c *gin.Context) {
-	//username := c.Query("username")
-	//password := c.Query("password")
-	//
-	//token := username + password
-	//
-	//if user, exist := usersLoginInfo[token]; exist {
-	//	c.JSON(http.StatusOK, UserLoginResponse{
-	//		Response: Response{StatusCode: 0},
-	//		UserId:   user.Id,
-	//		Token:    token,
-	//	})
-	//} else {
-	//	c.JSON(http.StatusOK, UserLoginResponse{
-	//		Response: Response{StatusCode: 1, StatusMsg: "User doesn't exist"},
-	//	})
-	//}
+	username := c.Query("username")
+	password := c.Query("password")
+
+	userResponse, err := Handlers.UserLogin(username, password)
+	if err != nil {
+		c.JSON(http.StatusOK, common.UserLoginResponse{
+			Response: common.Response{
+				StatusCode: 1,
+				StatusMsg:  err.Error(),
+			},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, common.UserLoginResponse{
+		Response: common.Response{
+			StatusCode: 0,
+			StatusMsg:  "登录成功",
+		},
+		UserResponse: userResponse,
+	})
 }
 
 func UserInfo(c *gin.Context) {
-	//token := c.Query("token")
-	//
-	//if user, exist := usersLoginInfo[token]; exist {
-	//	c.JSON(http.StatusOK, UserResponse{
-	//		Response: Response{StatusCode: 0},
-	//		User:     user,
-	//	})
-	//} else {
-	//	c.JSON(http.StatusOK, UserResponse{
-	//		Response: Response{StatusCode: 1, StatusMsg: "User doesn't exist"},
-	//	})
-	//}
+	//获取用户信息
+	UserID := c.Query("user_id")
+	newuser, err := Handlers.GetUserInfo(UserID)
+
+	if err != nil {
+		c.JSON(http.StatusOK, common.UserInfoResponse{
+			Response: common.Response{
+				StatusCode: 1,
+				StatusMsg:  err.Error(),
+			},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, common.UserInfoResponse{
+		Response: common.Response{
+			StatusCode: 0,
+			StatusMsg:  "获取用户信息成功",
+		},
+		User: newuser,
+	})
 }

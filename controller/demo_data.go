@@ -1,8 +1,6 @@
 package controller
 
-import (
-	"github.com/RaymondCode/simple-demo/common"
-)
+import "github.com/RaymondCode/simple-demo/common"
 
 var DemoVideos = []common.Video{
 	{
@@ -26,9 +24,6 @@ var DemoComments = []common.Comment{
 }
 
 var DemoUser = common.User{
-	Id:            1,
-	Name:          "TestUser",
-	FollowCount:   0,
-	FollowerCount: 0,
-	IsFollow:      false,
+	Id:   1,
+	Name: "TestUser",
 }

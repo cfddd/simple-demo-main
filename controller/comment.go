@@ -21,7 +21,7 @@ func CommentAction(c *gin.Context) {
 	if user, exist := usersLoginInfo[addComment.Token]; exist {
 		if addComment.ActionType == 1 {
 
-			err := Handlers.AddComment(addComment, user.Id)
+			err := Handlers.AddComment(addComment, int64(user.Id))
 			if err != nil {
 				c.JSON(http.StatusOK, common.Response{StatusCode: 0, StatusMsg: "评论失败"})
 				return

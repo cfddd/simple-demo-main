@@ -29,10 +29,10 @@ func UserAdd(douyinNum, username, password string) (models.User, error) {
 	return user, nil
 }
 
-// 根据用户id，查找用户信息
+// GetUser 根据用户id，查找用户信息
 func GetUser(userId uint) (models.User, error) {
 	var user models.User
-	if err := database.DB.Table("users").Where("user_id=?", userId).Find(&user).Error; err != nil { //找不到记录
+	if err := database.DB.Table("users").Where("id=?", userId).Find(&user).Error; err != nil { //找不到记录
 		return user, err
 	}
 	return user, nil

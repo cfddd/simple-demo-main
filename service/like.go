@@ -26,7 +26,7 @@ func OperateCreatorTotalFavorited(HostId uint, cnt int) error {
 func LikeExit(userId uint, videoId uint) bool {
 	var likeExist = &models.Like{} //找不到时会返回错误
 	result := database.DB.Table("likes").
-		Where("user_id = ? AND video_id = ?", userId, videoId).First(&likeExist)
+		Where("user_id = ? AND like_video = ?", userId, videoId).First(&likeExist)
 	return result.Error != nil // 找不到即不存在
 }
 

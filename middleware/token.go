@@ -18,18 +18,6 @@ type MyCustomClaims struct {
 	jwt.StandardClaims
 }
 
-// 随机字符串
-var letters = []rune("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-
-//// randStr 生成指定长度的随机字符串。
-//func randStr(str_len int) string {
-//	rand_bytes := make([]rune, str_len)
-//	for i := range rand_bytes {
-//		rand_bytes[i] = letters[rand.Intn(len(letters))]
-//	}
-//	return string(rand_bytes)
-//}
-
 // CreateTokenUsingHs256 创建一个 token
 func CreateTokenUsingHs256(userid uint, username string) (string, error) {
 	claim := MyCustomClaims{
