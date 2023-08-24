@@ -3,6 +3,7 @@ package Handlers
 import (
 	"github.com/RaymondCode/simple-demo/common"
 	"github.com/RaymondCode/simple-demo/global"
+	"github.com/RaymondCode/simple-demo/models"
 	"github.com/RaymondCode/simple-demo/service"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -41,4 +42,15 @@ func PasswordHash(password string) (string, error) {
 		return "", err
 	}
 	return string(PasswordHashed), nil
+}
+
+// 将用户信息转换成前端格式的用户信息
+func UserInformationFormatConversion(hostuser models.User) common.User {
+	var newuser common.User
+	newuser.Id = int64(hostuser.ID)
+	newuser.FollowerCount = 0
+	newuser.Name = hostuser.Name
+	newuser.FollowCount = 0
+	newuser.IsFollow = false
+	return newuser
 }

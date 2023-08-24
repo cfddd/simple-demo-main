@@ -6,7 +6,7 @@ import (
 )
 
 // UseExist 寻找是否存在该用户
-func UseExist(username string) (bool, models.User) {
+func UserExist(username string) (bool, models.User) {
 	//找到了该用户
 	var user models.User
 	if err := database.DB.Where("name = ?", username).Find(&user).Error; err == nil {

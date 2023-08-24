@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"github.com/RaymondCode/simple-demo/Handlers"
 	"github.com/RaymondCode/simple-demo/common"
 	"github.com/RaymondCode/simple-demo/service"
 	"github.com/gin-gonic/gin"
@@ -61,6 +62,14 @@ func FavoriteList(c *gin.Context) {
 	//函数调用及响应
 	videoList, err := service.GetLikeList(userIdNew)
 
+	// 转换成前端格式的video
+	var front_videoList []common.Video
+
+	for i, video := range videoList {
+		// 视频信息转换成前端需要的视频格式
+		front_videoList[i] = Handlers.VideoInformationFormatConversion(video)
+	}
+
 	if err != nil {
 		c.JSON(http.StatusBadRequest, common.LikeListResponse{
 			Response: common.Response{
@@ -75,7 +84,7 @@ func FavoriteList(c *gin.Context) {
 				StatusCode: 0,
 				StatusMsg:  "已找到列表！",
 			},
-			VideoList: videoList,
+			VideoList: front_videoList,
 		})
 	}
 }
