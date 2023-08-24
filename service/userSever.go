@@ -26,3 +26,12 @@ func UserAdd(username, password string) (models.User, error) {
 	}
 	return user, nil
 }
+
+// 根据用户ID查找对应用户信息（models.user）
+func GetUser(userId uint) (models.User, error) {
+	var user models.User
+	if err := database.DB.Table("users").Where("user_id=?", userId).Find(&user).Error; err != nil { //找不到记录
+		return user, nil
+	}
+	return user, nil
+}
