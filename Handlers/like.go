@@ -38,7 +38,7 @@ func FavoriteAction(userId uint, videoId uint) (err error) {
 		}
 
 		// 根据视频创作者的ID查找users库增加该创作者的被点赞次数（1为加一，-1为减一）
-		if err := service.OperateCreatorTotalFavorited(creatorId, 1); err != nil {
+		if err := service.OperateCreatorTotalFavorited(creatorId, -1); err != nil {
 			return err
 		}
 
