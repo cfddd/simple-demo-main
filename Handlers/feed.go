@@ -21,7 +21,7 @@ func FeedGive(token, lastTime string) ([]common.Video, int64) {
 
 	//如果视频列表循环完毕，将重新循环
 	videoList, err := service.FeedFrom(startTime)
-	if err != nil || videoList == nil {
+	if err != nil || len(videoList) == 0 {
 		return nil, time.Now().Unix()
 	}
 
