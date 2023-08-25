@@ -13,14 +13,13 @@ func FavoriteAction(c *gin.Context) {
 	//参数绑定
 	//user_id获取
 	getUserId, _ := c.Get("user_id")
+
 	var userId uint
 	if v, ok := getUserId.(uint); ok {
 		userId = v
 	}
 
 	//参数获取
-	//actionTypeStr := c.Query("action_type")
-	//actionType, _ := strconv.ParseUint(actionTypeStr, 10, 10)
 	videoIdStr := c.Query("video_id")
 	videoId, _ := strconv.ParseUint(videoIdStr, 10, 10)
 
@@ -59,11 +58,10 @@ func FavoriteList(c *gin.Context) {
 	}
 
 	//函数调用及响应
+	//videoList, err := Handlers.GetLikeList(userIdNew)
 	videoList, err := Handlers.GetLikeList(userIdNew)
-
 	// 转换成前端格式的video
 	var front_videoList []common.Video
-
 	for i, video := range videoList {
 		// 视频信息转换成前端需要的视频格式
 		front_videoList[i] = Handlers.VideoInformationFormatConversion(video)
