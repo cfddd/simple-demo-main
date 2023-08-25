@@ -98,8 +98,8 @@ func VerifyUserLogin() gin.HandlerFunc {
 			return
 		}
 
-		//c.Set("username", token.UserName)
-		//c.Set("user_id", token.UserID)
+		c.Set("username", token.UserName)
+		c.Set("user_id", token.UserID)
 		//c.Next()
 	}
 }

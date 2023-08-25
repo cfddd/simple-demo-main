@@ -74,14 +74,18 @@ func GetUserInfo(UserId string) (common.User, error) {
 		return common.User{}, err
 	}
 
+	return GetUserInfoById(uint(userId))
+}
+
+func GetUserInfoById(id uint) (common.User, error) {
 	//通过 userid 获取用户信息
-	user, err := service.GetUser(uint(userId))
+	user, err := service.GetUser(id)
 	if err != nil {
 		return common.User{}, err
 	}
-
 	newuser := UserInformationFormatConversion(user)
 	return newuser, nil
+
 }
 
 // UserExist 判断用户是否存在,存在为真，不存在为假，并返回该用户

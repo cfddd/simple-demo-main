@@ -9,40 +9,13 @@ import (
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"github.com/disintegration/imaging"
 	ffmpeg "github.com/u2takey/ffmpeg-go"
+	"io"
 	"log"
 	"mime/multipart"
 	"os"
+	"path/filepath"
+	"time"
 )
-
-// getVideoUrlByName
-
-// GetUploadedVideoUrl
-// 返回err
-func GetUploadedVideoUrl(finalName string, file *multipart.FileHeader) (s string, err error) {
-
-	client, err := oss.New("oss-cn-beijing.aliyuncs.com", "LTAI5t7Sm8h5LBiy6jCuNQ3B", "C45iWvAfDPxwDh7u5lmS4O65PpKCmr")
-	if err != nil {
-		return s, err
-	}
-
-	bucket, err := client.Bucket("cfddfc")
-	if err != nil {
-		return s, err
-	}
-
-	src, err := file.Open()
-	if err != nil {
-		return s, err
-	}
-	defer src.Close()
-
-	err = bucket.PutObject("public/"+finalName, src)
-	if err != nil {
-		return s, err
-	}
-	s = "https://cfddfc.oss-cn-beijing.aliyuncs.com/public/" + finalName
-	return s, nil
-}
 
 // VideoInformationFormatConversion 将视频信息转换成前端格式的视频信息
 func VideoInformationFormatConversion(hostvideo models.Video) common.Video {
@@ -61,10 +34,49 @@ func VideoInformationFormatConversion(hostvideo models.Video) common.Video {
 	return newvideo
 }
 
-// GetSnapshotUrl 在本地生产一张图片，然后返回本地的地址
-// 图片名称统一为videName.png
-// 比如test.mp4.png
-func GetSnapshotUrl(videoPath, snapshotPath string, frameNum int) (snapshotName string, err error) {
+// 下面是视频Publish的所有操作，入口是Publish
+var (
+	client *oss.Client
+	bucket *oss.Bucket
+)
+
+// 初始化OSS信息
+func initOSS() (err error) {
+	client, err = oss.New("oss-cn-beijing.aliyuncs.com", "LTAI5t7Sm8h5LBiy6jCuNQ3B", "C45iWvAfDPxwDh7u5lmS4O65PpKCmr")
+	if err != nil {
+		return err
+	}
+
+	bucket, err = client.Bucket("cfddfc")
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// SaveUploadedVideo uploads the form file to specific dst.
+func saveUploadedVideo(file *multipart.FileHeader, dst string) error {
+	src, err := file.Open()
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, src)
+	return err
+}
+
+// SaveGetSnapshot 根据videoPath视频，生成第frameNum帧，并保存在finalName，生成的图片自动加上.png后缀
+func saveGetSnapshot(videoPath, finalName string, frameNum int) (err error) {
+
+	fmt.Println(videoPath)
+	fmt.Println(finalName)
 
 	buf := bytes.NewBuffer(nil)
 
@@ -77,74 +89,121 @@ func GetSnapshotUrl(videoPath, snapshotPath string, frameNum int) (snapshotName 
 
 	if err != nil {
 		log.Fatal("生成缩略图失败：", err)
-		return "", err
+		return err
 	}
 
 	img, err := imaging.Decode(buf)
 	if err != nil {
 		log.Fatal("生成缩略图失败：", err)
-		return "", err
+		return err
 	}
 
-	err = imaging.Save(img, snapshotPath+".png")
+	err = imaging.Save(img, finalName+".png")
 	if err != nil {
 		log.Fatal("生成缩略图失败：", err)
-		return "", err
+		return err
 	}
-
-	url, err := SaveUploadedVideoCover(snapshotPath + ".png")
-	if err != nil {
-		return "", err
-	}
-
-	return url, err
+	return nil
 }
 
-// SaveUploadedVideo
-// 返回err
-func SaveUploadedVideoCover(finalName string) (s string, err error) {
-
-	client, err := oss.New("oss-cn-beijing.aliyuncs.com", "LTAI5t7Sm8h5LBiy6jCuNQ3B", "C45iWvAfDPxwDh7u5lmS4O65PpKCmr")
+// uploadFileToOSS 上传视频文件和视频封面图片到OSS
+func uploadFileToOSS(finalName string) (err error) {
+	//初始化OSS信息
+	err = initOSS()
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	bucket, err := client.Bucket("cfddfc")
-	if err != nil {
-		return "", err
-	}
+	//上传视频文件到OSS
+	{
+		//本地文件
+		src, err := os.Open("./public/" + finalName)
+		if err != nil {
+			return err
+		}
+		defer src.Close()
 
-	src, err := os.Open(finalName)
-
-	if err != nil {
-		return "", err
+		//远端存储逻辑路径
+		err = bucket.PutObject("public/"+finalName, src)
+		if err != nil {
+			return err
+		}
 	}
-	defer src.Close()
-
-	err = bucket.PutObject("public/"+finalName, src)
-	if err != nil {
-		return s, err
+	//上传视频封面图片到OSS
+	{
+		//本地文件
+		src, err := os.Open("./public/" + finalName + ".png")
+		if err != nil {
+			return err
+		}
+		defer src.Close()
+		//远端存储逻辑路径
+		err = bucket.PutObject("public/"+finalName+".png", src)
+		if err != nil {
+			return err
+		}
 	}
-	s = "https://cfddfc.oss-cn-beijing.aliyuncs.com/public/" + finalName
-	return s, nil
+	return nil
 }
 
-//@function: SaveVideoInfo
-//@description: 保存上传的视频信息在数据库中
-//@param: title string,videoUrl string,coverUrl string,videoCreator int64
-//@return: err error
+// deleteFile 删除视频文件和视频封面图片
+func deleteFile(saveFileName string) (err error) {
+	//删除./public/finalName和./public/finalName.png
+	err = os.Remove(saveFileName)
+	if err != nil {
+		log.Println("删除视频文件失败:", err)
+	}
+	err = os.Remove(saveFileName + ".png")
+	if err != nil {
+		log.Println("删除视频封面图片失败:", err)
+	}
+	return nil
+}
 
-func SaveVideoInfo(title, videoUrl, coverUrl string, videoCreator uint) (err error) {
-	var videoInfo models.Video
-	videoInfo = models.Video{
+func Publish(data *multipart.FileHeader, title string, userId uint) (err error) {
+	// 处理文件名
+	// 如果videoName的长度大于15，只拿后15个字符
+	// finalName是视频最终的名称
+	// saveVideoNameFile是保存的文件路径
+	videoName := filepath.Base(data.Filename)
+	videoNameLlength := len(videoName)
+	if videoNameLlength > 15 {
+		videoName = videoName[videoNameLlength-15:]
+	}
+	finalName := fmt.Sprintf("%d_%s_%s", userId, time.Now().Format("2006_01_02_15_04_05"), videoName) //文件格式不能有_以外的特殊字符
+	saveVideoNameFile := filepath.Join("./public", finalName)
+
+	//保存视频信息在saveFile路径
+	err = saveUploadedVideo(data, saveVideoNameFile)
+	if err != nil {
+		return
+	}
+
+	//保存视频第1帧在视频相同路径，生成的图片自动加上.png后缀
+	err = saveGetSnapshot(saveVideoNameFile, saveVideoNameFile, 1)
+
+	// 上传视频文件和视频封面图片到OSS
+	err = uploadFileToOSS(finalName)
+
+	//在数据库中保存视频信息
+	videoUrl := "https://cfddfc.oss-cn-beijing.aliyuncs.com/public/" + finalName
+	videoCoverUrl := "https://cfddfc.oss-cn-beijing.aliyuncs.com/public/" + finalName + ".png"
+
+	videoInfo := models.Video{
 		Title:         title,
 		PlayUrl:       videoUrl,
-		CoverUrl:      coverUrl,
-		VideoCreator:  videoCreator,
+		CoverUrl:      videoCoverUrl,
+		VideoCreator:  userId,
 		CommentCount:  0,
 		FavoriteCount: 0,
 	}
-
 	err = service.AddVideo(videoInfo)
-	return
+	if err != nil {
+		return err
+	}
+
+	// 删除保存在本地的视频和视频封面图片
+	deleteFile(saveVideoNameFile)
+
+	return nil
 }
