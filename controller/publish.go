@@ -48,7 +48,8 @@ func PublishList(c *gin.Context) {
 	GuestId := uint(id)
 
 	// 根据用户id查找它所有发布的视频信息
-	videoList, _ := Handlers.FindVideoList(GuestId)
+	videoList, _ := Handlers.GetVideoList(GuestId)
+
 	if len(videoList) == 0 {
 		c.JSON(http.StatusOK, common.VideoListResponse{
 			Response: common.Response{

@@ -209,6 +209,6 @@ func Publish(data *multipart.FileHeader, title string, userId uint) (err error) 
 }
 
 // 根据用户id查找它所有发布的视频信息
-func FindVideoList(userId uint) ([]models.Video, error) {
-	return FindVideoList(userId)
+func GetVideoList(userId uint) ([]models.Video, error) {
+	return service.FindVideoList(userId)
 }
