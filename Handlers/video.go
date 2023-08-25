@@ -31,6 +31,7 @@ func VideoInformationFormatConversion(hostvideo models.Video) common.Video {
 	newvideo.CoverUrl = hostvideo.CoverUrl
 	newvideo.CommentCount = int64(hostvideo.CommentCount)
 	newvideo.IsFavorite = false
+	newvideo.Title = hostvideo.Title
 	return newvideo
 }
 

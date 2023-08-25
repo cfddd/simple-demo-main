@@ -1,24 +1,24 @@
 package controller
 
 import (
+	"github.com/RaymondCode/simple-demo/Handlers"
 	"github.com/RaymondCode/simple-demo/common"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"time"
 )
-
-type FeedResponse struct {
-	common.Response
-	VideoList []common.Video `json:"video_list,omitempty"`
-	NextTime  int64          `json:"next_time,omitempty"`
-}
 
 // Feed same demo video list for every request
 func Feed(c *gin.Context) {
+	//获取数据
+	token := c.Query("token")
+	lastTime := c.Query("last_time")
 
-	c.JSON(http.StatusOK, FeedResponse{
+	//获取视频列表
+	videoList, nextTime := Handlers.FeedGive(token, lastTime)
+
+	c.JSON(http.StatusOK, common.FeedResponse{
 		Response:  common.Response{StatusCode: 0},
-		VideoList: DemoVideos,
-		NextTime:  time.Now().Unix(),
+		VideoList: videoList,
+		NextTime:  nextTime,
 	})
 }
