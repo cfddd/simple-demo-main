@@ -226,3 +226,7 @@ ffmpeg
 视频的名称就是user.Id+filename
 封面名称就是user.Id+filename+.png
 例如test.mp4,封面是test.mp4/png
+
+## 阿里云相关配置
+在权限控制里面的读写权限需要修改
+默认是私有，可以改为readOnly
