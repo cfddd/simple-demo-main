@@ -13,7 +13,6 @@ func FavoriteAction(c *gin.Context) {
 	//参数绑定
 	//user_id获取
 	getUserId, _ := c.Get("user_id")
-
 	var userId uint
 	if v, ok := getUserId.(uint); ok {
 		userId = v

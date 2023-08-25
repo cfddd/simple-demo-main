@@ -40,7 +40,7 @@ func UpdateVideo(id uint, content models.Video) (err error) {
 //@return: models.Video,err error
 
 func FindVideo(id uint) (u models.Video, err error) {
-	err = database.DB.Where("id = ?", id).First(&u).Error
+	err = database.DB.Table("videos").Where("id = ?", id).First(&u).Error
 	return
 }
 
@@ -62,4 +62,10 @@ func GetVideoAuthor(videoId uint) (uint, error) {
 		return 0, err
 	}
 	return video.VideoCreator, nil
+}
+
+func FindVideoList(userId uint) ([]models.Video, error) {
+	var videoList []models.Video
+	err := database.DB.Table("videos").Where("video_creator = ?", userId).Find(&videoList).Error
+	return videoList, err
 }

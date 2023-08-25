@@ -5,6 +5,7 @@ import (
 	"github.com/RaymondCode/simple-demo/common"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 )
 
 // Publish check token then save upload file to public directory
@@ -40,10 +41,35 @@ func Publish(c *gin.Context) {
 
 // PublishList all users have same publish video list
 func PublishList(c *gin.Context) {
-	c.JSON(http.StatusOK, common.VideoListResponse{
-		Response: common.Response{
-			StatusCode: 0,
-		},
-		VideoList: DemoVideos,
-	})
+
+	// 查找我要查看的用户的id
+	getGuestId := c.Query("user_id")
+	id, _ := strconv.Atoi(getGuestId)
+	GuestId := uint(id)
+
+	// 根据用户id查找它所有发布的视频信息
+	videoList, _ := Handlers.FindVideoList(GuestId)
+	if len(videoList) == 0 {
+		c.JSON(http.StatusOK, common.VideoListResponse{
+			Response: common.Response{
+				StatusCode: 1,
+				StatusMsg:  "null",
+			},
+			VideoList: nil,
+		})
+	} else { //需要展示的列表信息
+		// 转换成前端格式的video
+		var front_videoList []common.Video
+		for i, video := range videoList {
+			// 视频信息转换成前端需要的视频格式
+			front_videoList[i] = Handlers.VideoInformationFormatConversion(video)
+		}
+		c.JSON(http.StatusOK, common.VideoListResponse{
+			Response: common.Response{
+				StatusCode: 0,
+				StatusMsg:  "success",
+			},
+			VideoList: front_videoList,
+		})
+	}
 }
