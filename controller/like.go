@@ -60,7 +60,7 @@ func FavoriteList(c *gin.Context) {
 	//videoList, err := Handlers.GetLikeList(userIdNew)
 	videoList, err := Handlers.GetLikeList(userIdNew)
 	// 转换成前端格式的video
-	var front_videoList []common.Video
+	front_videoList := make([]common.Video, len(videoList))
 	for i, video := range videoList {
 		// 视频信息转换成前端需要的视频格式
 		front_videoList[i] = Handlers.VideoInformationFormatConversion(video)
