@@ -49,7 +49,7 @@ func FavoriteAction(userId uint, videoId uint) (err error) {
 		}
 
 		// 根据视频id给视频的被喜欢总数操作（1为加一，-1为减一）
-		if err := service.OperateVideoFavorite_count(videoId, 1); err != nil {
+		if err := service.OperateVideoFavorite_count(videoId, -1); err != nil {
 			return err
 		}
 

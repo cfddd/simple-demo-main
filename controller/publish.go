@@ -54,7 +54,7 @@ func PublishList(c *gin.Context) {
 		c.JSON(http.StatusOK, common.VideoListResponse{
 			Response: common.Response{
 				StatusCode: 1,
-				StatusMsg:  "null",
+				StatusMsg:  "没有视频",
 			},
 			VideoList: nil,
 		})
