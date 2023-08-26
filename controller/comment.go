@@ -21,7 +21,7 @@ func CommentAction(c *gin.Context) {
 			ActionType:  int32(actionType),
 			CommentText: c.Query("comment_text"),
 		}
-		err := Handlers.AddComment(Comment, int64(userId.(uint)))
+		err := Handlers.AddCommentWithTransaction(Comment, int64(userId.(uint)))
 		if err != nil {
 			c.JSON(http.StatusOK, common.Response{StatusCode: 0, StatusMsg: "评论失败"})
 			return
@@ -44,7 +44,7 @@ func CommentAction(c *gin.Context) {
 		return
 	} else if actionType == 2 {
 		commentID, _ := strconv.ParseInt(c.Query("comment_id"), 10, 64)
-		err := Handlers.DeleteComment(commentID)
+		err := Handlers.DeleteCommentWithTransaction(commentID)
 		if err != nil {
 			c.JSON(http.StatusOK, common.Response{StatusCode: 0, StatusMsg: "评论删除失败"})
 			return

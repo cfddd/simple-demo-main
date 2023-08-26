@@ -78,3 +78,8 @@ func FindVideoList(userId uint) ([]models.Video, error) {
 func ChangeVideoCommentCount(commentId uint, x int) (err error) {
 	return database.DB.Model(&models.Video{}).Where("id = ?", commentId).Update("comment_count", gorm.Expr("comment_count + ?", x)).Error
 }
+
+func ChangeVideoCommentCountWithTransaction(tx *gorm.DB, commentId uint, x int) (err error) {
+	err = tx.Model(&models.Video{}).Where("id = ?", commentId).Update("comment_count", gorm.Expr("comment_count + ?", x)).Error
+	return err
+}
