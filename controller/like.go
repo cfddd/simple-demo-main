@@ -23,7 +23,7 @@ func FavoriteAction(c *gin.Context) {
 	videoId, _ := strconv.ParseUint(videoIdStr, 10, 10)
 
 	//函数调用及响应
-	err := Handlers.FavoriteAction(userId, uint(videoId))
+	err := Handlers.FavoriteActionWithTransaction(userId, uint(videoId))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, common.Response{
 			StatusCode: 1,

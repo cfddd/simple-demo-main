@@ -1,6 +1,7 @@
 package Handlers
 
 import (
+	"github.com/RaymondCode/simple-demo/database"
 	"github.com/RaymondCode/simple-demo/models"
 	"github.com/RaymondCode/simple-demo/service"
 )
@@ -38,7 +39,7 @@ func FavoriteAction(userId uint, videoId uint) (err error) {
 		}
 
 		// 根据视频创作者的ID查找users库增加该创作者的被点赞次数（1为加一，-1为减一）
-		if err := service.OperateCreatorTotalFavorited(creatorId, -1); err != nil {
+		if err := service.OperateCreatorTotalFavorited(creatorId, 1); err != nil {
 			return err
 		}
 
@@ -70,6 +71,73 @@ func FavoriteAction(userId uint, videoId uint) (err error) {
 			return err
 		}
 	}
+	return nil
+}
+
+// 事务
+func FavoriteActionWithTransaction(userId uint, videoId uint) error {
+	tx := database.DB.Begin() // 开启事务
+
+	giveLike := models.Like{
+		UserID:    userId,
+		LikeVideo: videoId,
+	}
+
+	if service.LikeExit(userId, videoId) { // 不存在
+		if err := service.CreateLikeTx(tx, giveLike); err != nil {
+			tx.Rollback() // 回滚事务
+			return err
+		}
+
+		if err := service.OperateVideoFavorite_countTx(tx, videoId, 1); err != nil {
+			tx.Rollback() // 回滚事务
+			return err
+		}
+
+		if err := service.OperateUserFavoriteCountTx(tx, userId, 1); err != nil {
+			tx.Rollback() // 回滚事务
+			return err
+		}
+
+		creatorId, err := service.GetVideoAuthor(videoId)
+		if err != nil {
+			tx.Rollback() // 回滚事务
+			return err
+		}
+
+		if err := service.OperateCreatorTotalFavoritedTx(tx, creatorId, 1); err != nil {
+			tx.Rollback() // 回滚事务
+			return err
+		}
+	} else { // 取消点赞
+		if err := service.DeleteLikeTx(tx, giveLike); err != nil {
+			tx.Rollback() // 回滚事务
+			return err
+		}
+
+		if err := service.OperateVideoFavorite_countTx(tx, videoId, -1); err != nil {
+			tx.Rollback() // 回滚事务
+			return err
+		}
+
+		if err := service.OperateUserFavoriteCountTx(tx, userId, -1); err != nil {
+			tx.Rollback() // 回滚事务
+			return err
+		}
+
+		creatorId, err := service.GetVideoAuthor(videoId)
+		if err != nil {
+			tx.Rollback() // 回滚事务
+			return err
+		}
+
+		if err := service.OperateCreatorTotalFavoritedTx(tx, creatorId, -1); err != nil {
+			tx.Rollback() // 回滚事务
+			return err
+		}
+	}
+
+	tx.Commit() // 提交事务
 	return nil
 }
 
