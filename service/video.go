@@ -69,3 +69,12 @@ func FindVideoList(userId uint) ([]models.Video, error) {
 	err := database.DB.Table("videos").Where("video_creator = ?", userId).Find(&videoList).Error
 	return videoList, err
 }
+
+//@function: changeVideoCommentCount
+//@description: 给视频的评论数CommentCount+x
+//@param: commentId uint,x int
+//@return: err error
+
+func ChangeVideoCommentCount(commentId uint, x int) (err error) {
+	return database.DB.Model(&models.Video{}).Where("id = ?", commentId).Update("comment_count", gorm.Expr("comment_count + ?", x)).Error
+}

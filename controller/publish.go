@@ -25,7 +25,6 @@ func Publish(c *gin.Context) {
 
 	//发布视频
 	err = Handlers.Publish(data, title, userId.(uint))
-
 	if err != nil {
 		c.JSON(http.StatusOK, common.Response{
 			StatusCode: 1,
@@ -33,6 +32,10 @@ func Publish(c *gin.Context) {
 		})
 		return
 	}
+
+	// 用户的视频发布数量+1
+	Handlers.IncreaseVideoCount(userId.(uint))
+
 	c.JSON(http.StatusOK, common.Response{
 		StatusCode: 0,
 		StatusMsg:  "Your video uploaded successfully",

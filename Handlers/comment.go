@@ -6,12 +6,36 @@ import (
 	"github.com/RaymondCode/simple-demo/service"
 )
 
-func AddComment(comment common.CommentRequest, userId int64) error {
-	return service.AddComment(models.Comment{
+func AddComment(comment common.CommentRequest, userId int64) (err error) {
+	err = service.AddComment(models.Comment{
 		VideoID:    uint(comment.VideoId),
 		ReviewUser: uint(userId),
 		Content:    comment.CommentText,
 	})
+	if err != nil {
+		return err
+	}
+
+	err = service.ChangeVideoCommentCount(uint(comment.VideoId), 1)
+	if err != nil {
+		return err
+	}
+
+	return
+}
+
+func DeleteComment(commentID int64) (err error) {
+	err = service.DeleteComment(uint(commentID))
+	if err != nil {
+		return err
+	}
+
+	err = service.ChangeVideoCommentCount(uint(commentID), -1)
+	if err != nil {
+		return err
+	}
+
+	return
 }
 
 func GetCommentList(videoId int64) (CommentList []common.Comment) {

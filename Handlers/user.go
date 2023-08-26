@@ -127,3 +127,8 @@ func UserInformationFormatConversion(hostuser models.User) common.User {
 
 	return newuser
 }
+
+// IncreaseVideoCount 用户的视频发布数量+1
+func IncreaseVideoCount(userId uint) {
+	service.IncreaseVideoCount(userId)
+}
