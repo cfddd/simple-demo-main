@@ -79,7 +79,8 @@ func ChangeVideoCommentCount(commentId uint, x int) (err error) {
 	return database.DB.Model(&models.Video{}).Where("id = ?", commentId).Update("comment_count", gorm.Expr("comment_count + ?", x)).Error
 }
 
-func ChangeVideoCommentCountWithTransaction(tx *gorm.DB, commentId uint, x int) (err error) {
-	err = tx.Model(&models.Video{}).Where("id = ?", commentId).Update("comment_count", gorm.Expr("comment_count + ?", x)).Error
+// ChangeVideoCommentCountWithTransaction 根据视频的videoID，修改这个视频对印的comment_count
+func ChangeVideoCommentCountWithTransaction(tx *gorm.DB, videoId uint, x int) (err error) {
+	err = tx.Model(&models.Video{}).Where("id = ?", videoId).Update("comment_count", gorm.Expr("comment_count + ?", x)).Error
 	return err
 }

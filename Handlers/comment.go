@@ -68,7 +68,7 @@ func AddCommentWithTransaction(comment common.CommentRequest, userId int64) (err
 	return err
 }
 
-func DeleteCommentWithTransaction(commentID int64) (err error) {
+func DeleteCommentWithTransaction(commentID int64, videoID int64) (err error) {
 	tx := database.DB.Begin() // 开启事务
 	defer func() {
 		if r := recover(); r != nil {
@@ -82,7 +82,7 @@ func DeleteCommentWithTransaction(commentID int64) (err error) {
 		return err
 	}
 
-	err = service.ChangeVideoCommentCountWithTransaction(tx, uint(commentID), -1)
+	err = service.ChangeVideoCommentCountWithTransaction(tx, uint(videoID), -1)
 	if err != nil {
 		tx.Rollback() // 发生错误时回滚事务
 		return err

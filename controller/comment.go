@@ -44,7 +44,7 @@ func CommentAction(c *gin.Context) {
 		return
 	} else if actionType == 2 {
 		commentID, _ := strconv.ParseInt(c.Query("comment_id"), 10, 64)
-		err := Handlers.DeleteCommentWithTransaction(commentID)
+		err := Handlers.DeleteCommentWithTransaction(commentID, videoId)
 		if err != nil {
 			c.JSON(http.StatusOK, common.Response{StatusCode: 0, StatusMsg: "评论删除失败"})
 			return
