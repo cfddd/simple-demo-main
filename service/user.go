@@ -40,6 +40,6 @@ func GetUser(userId uint) (models.User, error) {
 }
 
 // IncreaseVideoCount 用户的视频发布数量+1
-func IncreaseVideoCount(userId uint) {
-	database.DB.Model(models.User{}).Where("id = ?", userId).Update("video_count", gorm.Expr("video_count + ?", 1))
+func IncreaseVideoCount(userId uint) error {
+	return database.DB.Model(models.User{}).Where("id = ?", userId).Update("article_count", gorm.Expr("article_count + ?", 1)).Error
 }

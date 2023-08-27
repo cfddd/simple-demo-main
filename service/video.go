@@ -7,13 +7,18 @@ import (
 )
 
 //@function: addVideo
-//@description: 发布视频
+//@description: 发布视频,返回创建的videoId
 //@param: u models.video
-//@return: err error
+//@return: err error,videoId uint
 
-func AddVideo(u models.Video) (err error) {
-	return database.DB.Create(&u).Error
+func AddVideo(u models.Video) (videoId uint, err error) {
+	err = database.DB.Create(&u).Error
+	if err != nil {
+		return 0, err
+	}
+	videoId = u.ID
 
+	return
 }
 
 //@function: deleteVideo

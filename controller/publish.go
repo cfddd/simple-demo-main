@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"github.com/RaymondCode/simple-demo/Handlers"
 	"github.com/RaymondCode/simple-demo/common"
 	"github.com/gin-gonic/gin"
@@ -24,6 +25,7 @@ func Publish(c *gin.Context) {
 	userId, _ := c.Get("user_id")
 
 	//发布视频
+	//同时在post表中保存已发布视频信息
 	err = Handlers.Publish(data, title, userId.(uint))
 	if err != nil {
 		c.JSON(http.StatusOK, common.Response{
@@ -32,9 +34,6 @@ func Publish(c *gin.Context) {
 		})
 		return
 	}
-
-	// 用户的视频发布数量+1
-	Handlers.IncreaseVideoCount(userId.(uint))
 
 	c.JSON(http.StatusOK, common.Response{
 		StatusCode: 0,
@@ -49,11 +48,12 @@ func PublishList(c *gin.Context) {
 	getGuestId := c.Query("user_id")
 	id, _ := strconv.Atoi(getGuestId)
 	GuestId := uint(id)
+	fmt.Println(GuestId)
 
 	// 根据用户id查找它所有发布的视频信息
-	videoList, _ := Handlers.GetVideoList(GuestId)
+	postList, _ := Handlers.GetPostList(GuestId)
 
-	if len(videoList) == 0 {
+	if len(postList) == 0 {
 		c.JSON(http.StatusOK, common.VideoListResponse{
 			Response: common.Response{
 				StatusCode: 1,
@@ -63,17 +63,18 @@ func PublishList(c *gin.Context) {
 		})
 	} else { //需要展示的列表信息
 		// 转换成前端格式的video
-		front_videoList := make([]common.Video, len(videoList))
-		for i, video := range videoList {
+		front_postList := make([]common.Video, len(postList))
+		for i, post := range postList {
+			video, _ := Handlers.GetVideoInformation(post.CreatedVideo)
 			// 视频信息转换成前端需要的视频格式
-			front_videoList[i] = Handlers.VideoInformationFormatConversion(video)
+			front_postList[i] = Handlers.VideoInformationFormatConversion(video)
 		}
 		c.JSON(http.StatusOK, common.VideoListResponse{
 			Response: common.Response{
 				StatusCode: 0,
 				StatusMsg:  "success",
 			},
-			VideoList: front_videoList,
+			VideoList: front_postList,
 		})
 	}
 }
