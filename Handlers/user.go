@@ -117,14 +117,12 @@ func hashUsername(username string) string {
 // UserInformationFormatConversion 将用户信息转换成前端格式的用户信息
 func UserInformationFormatConversion(hostuser models.User) common.User {
 	var newuser common.User
-
 	newuser.Id = hostuser.ID
 	newuser.DouyinNum = hostuser.DouyinNum
 	newuser.Name = hostuser.Name
 	newuser.TotalFavorite = hostuser.TotalFavorite
 	newuser.FavoriteCount = hostuser.FavoriteCount
 	newuser.ArticleCount = hostuser.ArticleCount
-
 	return newuser
 }
 

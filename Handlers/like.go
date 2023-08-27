@@ -142,10 +142,10 @@ func FavoriteActionWithTransaction(userId uint, videoId uint) error {
 }
 
 // 从数据库查询喜欢列表
-func GetLikeList(videoId uint) ([]models.Video, error) {
+func GetLikeList(userId uint) ([]models.Video, error) {
 
 	// 查询当前id用户的所有点赞信息
-	likeList, _ := service.GetLikeList(videoId)
+	likeList, _ := service.GetLikeList(userId)
 
 	var videoList []models.Video
 	// 根据点赞信息，查找对应的视频信息

@@ -12,7 +12,7 @@ import (
 //@return: err error,videoId uint
 
 func AddVideo(u models.Video) (videoId uint, err error) {
-	err = database.DB.Create(&u).Error
+	err = database.DB.Table("videos").Create(&u).Error
 	if err != nil {
 		return 0, err
 	}
@@ -27,7 +27,7 @@ func AddVideo(u models.Video) (videoId uint, err error) {
 //@return: err error
 
 func DeleteVideo(id uint) (err error) {
-	return database.DB.Where("id = ?", id).Delete(&models.Video{}).Error
+	return database.DB.Table("videos").Where("id = ?", id).Delete(&models.Video{}).Error
 }
 
 //@function: updateVideo

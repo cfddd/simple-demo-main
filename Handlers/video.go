@@ -210,6 +210,12 @@ func Publish(data *multipart.FileHeader, title string, userId uint) (err error) 
 		return err
 	}
 
+	// user表的用户的视频发布数量+1
+	err = IncreaseVideoCount(userId)
+	if err != nil {
+		return err
+	}
+
 	// 上传视频文件和视频封面图片到OSS
 	err = uploadFileToOSS(finalName)
 	if err != nil {
@@ -218,12 +224,6 @@ func Publish(data *multipart.FileHeader, title string, userId uint) (err error) 
 
 	// 删除保存在本地的视频和视频封面图片
 	err = deleteFile(saveVideoNameFile)
-	if err != nil {
-		return err
-	}
-
-	// user表的用户的视频发布数量+1
-	err = IncreaseVideoCount(userId)
 	if err != nil {
 		return err
 	}
