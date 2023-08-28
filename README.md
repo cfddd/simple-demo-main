@@ -178,19 +178,359 @@ likes
 
 ### 鉴权
 
-### 视频流接口：douyin/feed/
+token验证:
+```go
+// VerifyTokenHs256 验证 token
+// 这段代码的目的是对令牌进行完整的解析、验证和类型转换，确保令牌是有效的，并且可以安全地使用其中的声明数据。
+func VerifyTokenHs256(tokenString string) (*MyCustomClaims, error) {
+	//将 tokenString 转化成 MyCustomClaims 的实例
+	token, err := jwt.ParseWithClaims(tokenString, &MyCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(Key), nil //返回签名密钥
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	//判断token是否有效
+	if !token.Valid {
+		return nil, errors.New("claim invalid")
+	}
+
+	claims, ok := token.Claims.(*MyCustomClaims)
+	if !ok {
+		return nil, errors.New("invalid claim type")
+	}
+
+	return claims, nil
+}
+```
+
+token超时判断:
+```go
+//token超时
+if token.ExpiresAt < time.Now().Unix() {
+    c.JSON(http.StatusOK, common.Response{
+        StatusCode: 402,
+        StatusMsg:  "令牌过期",
+    })
+    c.Abort() //拦截
+    return
+}
+```
+
+设置上下文的用户信息:
+```go
+//设置上下文的用户信息
+c.Set("username", token.UserName)
+c.Set("user_id", token.UserID)
+```
+
+
+### 视频流接口：/feed/
+
+获取视频流
+```go
+// FeedGive 获取 feed 的需要的视频列表，并且返回当前视频最早的创作时间，以便下次使用时不会重复
+func FeedGive(token, lastTime string) ([]common.Video, int64) {
+	//验证用户登陆信息
+	tokenStruct, err := middleware.VerifyTokenHs256(token)
+
+	//视频列表开始时间（以视频创作时间来比较）
+	startTime, err := strconv.ParseInt(lastTime, 10, 64)
+	if err != nil {
+		startTime = time.Now().Unix()
+	}
+
+	//如果视频列表循环完毕，将重新循环
+	videoList, err := service.FeedFrom(startTime)
+	if err != nil || len(videoList) == 0 {
+		return nil, time.Now().Unix()
+	}
+
+	//将下一次返回的时间戳修改为最早的视频创建时间
+	videoListLen := len(videoList)
+	nextTime := videoList[videoListLen-1].CreatedAt.Unix()
+
+	//将获取到的视频数据修改为前端响应的格式
+	videoListToFeed := make([]common.Video, videoListLen)
+	for i, video := range videoList {
+		videoListToFeed[i] = VideoInformationFormatConversion(video)
+		//判断当前浏览用户是否点赞该视频
+		if tokenStruct != nil {
+			//如果存在该点赞记录，则 IsFavorite 为真
+			if !service.LikeExit(tokenStruct.UserID, video.ID) {
+				videoListToFeed[i].IsFavorite = true
+			}
+		}
+	}
+
+	return videoListToFeed, nextTime
+}
+```
+
+如果视频列表循环完毕，将重新循环:
+```go
+func FeedFrom(startTime int64) ([]models.Video, error) {
+	//将时间戳转化为标准时间格式以便查询数据库
+	tm := time.Unix(startTime, 0)
+	timeStr := tm.Format("2006-01-02 15:04:05")
+
+	var videoList []models.Video
+	err := database.DB.Where("created_at <= ?", timeStr).Order("created_at DESC").Limit(4).Find(&videoList).Error
+
+	//将查询到的数据返回
+	return videoList, err
+}
+```
+
+
 
 ### User---用户信息表：/user/
 
 #### 用户注册：/user/register/
 
+将密码哈希处理:
+
+我们使用哈希函数对密码进行哈希处理，然后将哈希值存储在数据库中。当用户登录时，将其提供的密码与数据库中的哈希值进行比对，以验证密码的正确性。这样可以保证密码的安全性以保证密码不会被泄露。
+
+我们使用了 bcrypt 算法对密码进行哈希和加盐处理，这是一种常见且安全的方式。
+```go
+// PasswordHash 用户密码加密函数
+func PasswordHash(password string) (string, error) {
+	//对密码进行哈希处理
+	PasswordHashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(PasswordHashed), nil
+}
+```
+
+创建token:
+```go
+// CreateTokenUsingHs256 创建一个 token
+func CreateTokenUsingHs256(userid uint, username string) (string, error) {
+	claim := MyCustomClaims{
+		UserID:   userid,
+		UserName: username,
+		StandardClaims: jwt.StandardClaims{
+			Issuer:    "hdheid",                              //签发者
+			Subject:   "usertoken",                           //签发对象
+			IssuedAt:  time.Now().Unix(),                     //签发时间：当前
+			ExpiresAt: time.Now().Add(48 * time.Hour).Unix(), //过期时间：48小时后
+		},
+	}
+	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claim).SignedString([]byte(Key))
+	return token, err
+}
+```
+
 #### 用户登录：/user/login/
 
+查询用户是否存在->检验密码是否正确->创建token->返回响应数据
+
+创建token:
+```go
+// CreateTokenUsingHs256 创建一个 token
+func CreateTokenUsingHs256(userid uint, username string) (string, error) {
+	claim := MyCustomClaims{
+		UserID:   userid,
+		UserName: username,
+		StandardClaims: jwt.StandardClaims{
+			Issuer:    "hdheid",                              //签发者
+			Subject:   "usertoken",                           //签发对象
+			IssuedAt:  time.Now().Unix(),                     //签发时间：当前
+			ExpiresAt: time.Now().Add(48 * time.Hour).Unix(), //过期时间：48小时后
+		},
+	}
+	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claim).SignedString([]byte(Key))
+	return token, err
+}
+```
+
 #### 用户信息处理：
+
+
 
 ### publish---发布
 
 #### 发布视频：/publish/action/
+
+处理文件名->保存视频信息在saveFile路径->保存视频第1帧在视频相同路径，生成的图片自动加上.png后缀->在数据库中保存视频信息->上传视频文件和视频封面图片到OSS->删除保存在本地的视频和视频封面图片->在对应数据库添加对应发布视频的信息
+
+基本功能完成
+/douyin/publish/action/ - 视频投稿
+登录用户选择视频上传。
+
+使用了ffmpeg把上传视频的第1帧作为视频封面
+然后把视频和图片先暂存在本地public下，再上传到阿里云OSS
+视频的名称就是user.Id+filename
+封面名称就是user.Id+filename+.png
+例如test.mp4,封面是test.mp4/png
+
+```go
+// 处理文件名
+// 如果videoName的长度大于15，只拿后15个字符
+// finalName是视频最终的名称
+// saveVideoNameFile是保存的文件路径
+videoName := filepath.Base(data.Filename)
+videoNameLlength := len(videoName)
+if videoNameLlength > 15 {
+videoName = videoName[videoNameLlength-15:]
+}
+finalName := fmt.Sprintf("%d_%s_%s", userId, time.Now().Format("2006_01_02_15_04_05"), videoName) //文件格式不能有_以外的特殊字符
+saveVideoNameFile := filepath.Join("./public", finalName)
+
+//保存视频信息在saveFile路径
+err = saveUploadedVideo(data, saveVideoNameFile)
+if err != nil {
+    return
+}
+
+//保存视频第1帧在视频相同路径，生成的图片自动加上.png后缀
+err = saveGetSnapshot(saveVideoNameFile, saveVideoNameFile, 1)
+if err != nil {
+    return
+}
+
+//在数据库中保存视频信息
+videoUrl := "https://cfddfc.oss-cn-beijing.aliyuncs.com/public/" + finalName
+videoCoverUrl := "https://cfddfc.oss-cn-beijing.aliyuncs.com/public/" + finalName + ".png"
+
+videoInfo := models.Video{
+    Title:         title,
+    PlayUrl:       videoUrl,
+    CoverUrl:      videoCoverUrl,
+    VideoCreator:  userId,
+    CommentCount:  0,
+    FavoriteCount: 0,
+}
+
+// 上传视频文件和视频封面图片到OSS
+err = uploadFileToOSS(finalName)
+if err != nil {
+    return err
+}
+
+// 删除保存在本地的视频和视频封面图片
+err = deleteFile(saveVideoNameFile)
+if err != nil {
+    return err
+}
+```
+保存视频信息在saveFile路径:
+```go
+func saveUploadedVideo(file *multipart.FileHeader, dst string) error {
+	src, err := file.Open()
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, src)
+	return err
+}
+```
+
+保存视频第1帧在视频相同路径，生成的图片自动加上.png后缀:
+```go
+// SaveGetSnapshot 根据videoPath视频，生成第frameNum帧，并保存在finalName，生成的图片自动加上.png后缀
+func saveGetSnapshot(videoPath, finalName string, frameNum int) (err error) {
+
+	buf := bytes.NewBuffer(nil)
+
+	err = ffmpeg.
+		Input(videoPath).
+		Filter("select", ffmpeg.Args{fmt.Sprintf("gte(n,%d)", frameNum)}).
+		Output("pipe:", ffmpeg.KwArgs{"vframes": 1, "format": "image2", "vcodec": "mjpeg"}).
+		WithOutput(buf, os.Stdout).
+		Run()
+
+	if err != nil {
+		log.Fatal("生成缩略图失败：", err)
+		return err
+	}
+
+	img, err := imaging.Decode(buf)
+	if err != nil {
+		log.Fatal("生成缩略图失败：", err)
+		return err
+	}
+
+	err = imaging.Save(img, finalName+".png")
+	if err != nil {
+		log.Fatal("生成缩略图失败：", err)
+		return err
+	}
+	return nil
+}
+```
+
+上传视频文件和视频封面图片到OSS:
+```go
+// uploadFileToOSS 上传视频文件和视频封面图片到OSS
+func uploadFileToOSS(finalName string) (err error) {
+	//初始化OSS信息
+	err = initOSS()
+	if err != nil {
+		return err
+	}
+
+	//上传视频文件到OSS
+	{
+		//本地文件
+		src, err := os.Open("./public/" + finalName)
+		if err != nil {
+			return err
+		}
+		defer src.Close()
+
+		//远端存储逻辑路径
+		err = bucket.PutObject("public/"+finalName, src)
+		if err != nil {
+			return err
+		}
+	}
+	//上传视频封面图片到OSS
+	{
+		//本地文件
+		src, err := os.Open("./public/" + finalName + ".png")
+		if err != nil {
+			return err
+		}
+		defer src.Close()
+		//远端存储逻辑路径
+		err = bucket.PutObject("public/"+finalName+".png", src)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+```
+
+删除保存在本地的视频和视频封面图片:
+```go
+// deleteFile 删除视频文件和视频封面图片
+func deleteFile(saveFileName string) (err error) {
+	//删除./public/finalName和./public/finalName.png
+	err = os.Remove(saveFileName)
+	if err != nil {
+		log.Println("删除视频文件失败:", err)
+	}
+	err = os.Remove(saveFileName + ".png")
+	if err != nil {
+		log.Println("删除视频封面图片失败:", err)
+	}
+	return nil
+}
+```
 
 #### 获取发布视频列表：/publish/list/
 
@@ -339,15 +679,47 @@ func VideoInformationFormatConversion(hostvideo models.Video) common.Video {
 
 #### 发布评论：/comment/action/
 
+添加评论:
+```go
+err = service.AddCommentWithTransaction(tx, models.Comment{
+    VideoID:    uint(comment.VideoId),
+    ReviewUser: uint(userId),
+    Content:    comment.CommentText,
+})
+```
+
+修改评论:
+```go
+err = service.ChangeVideoCommentCountWithTransaction(tx, uint(comment.VideoId), 1)
+if err != nil {
+    tx.Rollback() // 发生错误时回滚事务
+    return err
+}
+```
+删除评论:
+```go
+err = service.DeleteCommentWithTransaction(tx, uint(commentID))
+if err != nil {
+    tx.Rollback() // 发生错误时回滚事务
+    return err
+}
+```
+
 #### 获取视频评论：/comment/list/
 
+获取评论列表:
+```go
+func GetCommentList(videoId int64) (CommentList []common.Comment) {
+	commentData, _ := service.GetCommentList(uint(videoId))
+
+	for _, comment := range commentData {
+		CommentList = append(CommentList, CommentInformationFormatConversion(comment))
+	}
+	return
+}
+```
 
 
-
-
-我们使用哈希函数对密码进行哈希处理，然后将哈希值存储在数据库中。当用户登录时，将其提供的密码与数据库中的哈希值进行比对，以验证密码的正确性。这样可以保证密码的安全性以保证密码不会被泄露。
-
-我们使用了 bcrypt 算法对密码进行哈希和加盐处理，这是一种常见且安全的方式。
 
 # 架构
 
@@ -364,15 +736,7 @@ ffmpeg
 因为ffmpeg.input只能是本地的文件
 
 ## videoPublish 
-基本功能完成
-/douyin/publish/action/ - 视频投稿
-登录用户选择视频上传。
 
-使用了ffmpeg把上传视频的第1帧作为视频封面
-然后把视频和图片先暂存在本地public下，再上传到阿里云OSS
-视频的名称就是user.Id+filename
-封面名称就是user.Id+filename+.png
-例如test.mp4,封面是test.mp4/png
 
 ## 阿里云相关配置
 在权限控制里面的读写权限需要修改
