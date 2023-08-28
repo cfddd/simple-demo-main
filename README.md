@@ -106,7 +106,7 @@ type User struct {
 	Password      string `json:"password"`
 	TotalFavorite int    `json:"totalFavorite"` //获赞总数
 	FavoriteCount int    `json:"favoriteCount"` //点赞总数
-	ArticleCount  int    `json:"articleCount"`  //视频总数
+	WorkCount  int    `json:"articleCount"`  //视频总数
 	Likes         []Like `json:"likes"`         //喜欢列表
 	Posts         []Post `json:"posts"`         //作评列表
 }
@@ -236,3 +236,6 @@ ffmpeg
 
 暂时先不测试，因为前端没有缓存已有的视频数据，每次都要下载才行，就导致流量用量很大
 继续用demo视频
+
+## bug收集
+1. 用户的信息只在用户登陆的时候获取？

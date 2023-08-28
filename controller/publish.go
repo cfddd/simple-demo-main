@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"github.com/RaymondCode/simple-demo/Handlers"
 	"github.com/RaymondCode/simple-demo/common"
 	"github.com/gin-gonic/gin"
@@ -48,7 +47,6 @@ func PublishList(c *gin.Context) {
 	getGuestId := c.Query("user_id")
 	id, _ := strconv.Atoi(getGuestId)
 	GuestId := uint(id)
-	fmt.Println(GuestId)
 
 	// 根据用户id查找它所有发布的视频信息
 	postList, _ := Handlers.GetPostList(GuestId)
