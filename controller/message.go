@@ -20,6 +20,7 @@ type ChatResponse struct {
 }
 
 // MessageAction no practical effect, just check if token is valid
+// 这是聊天记录和消息接口
 func MessageAction(c *gin.Context) {
 	token := c.Query("token")
 	toUserId := c.Query("to_user_id")
