@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/RaymondCode/simple-demo/common"
+	"github.com/RaymondCode/simple-demo/database"
 	"github.com/RaymondCode/simple-demo/models"
 	"github.com/RaymondCode/simple-demo/service"
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
@@ -75,9 +76,6 @@ func saveUploadedVideo(file *multipart.FileHeader, dst string) error {
 
 // SaveGetSnapshot 根据videoPath视频，生成第frameNum帧，并保存在finalName，生成的图片自动加上.png后缀
 func saveGetSnapshot(videoPath, finalName string, frameNum int) (err error) {
-
-	fmt.Println(videoPath)
-	fmt.Println(finalName)
 
 	buf := bytes.NewBuffer(nil)
 
@@ -198,23 +196,6 @@ func Publish(data *multipart.FileHeader, title string, userId uint) (err error) 
 		CommentCount:  0,
 		FavoriteCount: 0,
 	}
-	//在video表中添加视频信息
-	videoId, err := service.AddVideo(videoInfo)
-	if err != nil {
-		return err
-	}
-
-	// 在post表中添加对应用户发布的视频信息
-	err = AddPost(videoId, userId)
-	if err != nil {
-		return err
-	}
-
-	// user表的用户的视频发布数量+1
-	err = IncreaseVideoCount(userId)
-	if err != nil {
-		return err
-	}
 
 	// 上传视频文件和视频封面图片到OSS
 	err = uploadFileToOSS(finalName)
@@ -227,6 +208,31 @@ func Publish(data *multipart.FileHeader, title string, userId uint) (err error) 
 	if err != nil {
 		return err
 	}
+
+	tx := database.DB.Begin() // 开启事务
+
+	//在video表中添加视频信息
+	videoId, err := service.AddVideo(videoInfo)
+	if err != nil {
+		tx.Rollback() // 回滚事务
+		return err
+	}
+
+	// 在post表中添加对应用户发布的视频信息
+	err = AddPost(videoId, userId)
+	if err != nil {
+		tx.Rollback() // 回滚事务
+		return err
+	}
+
+	// user表的用户的视频发布数量+1
+	err = IncreaseVideoCount(userId)
+	if err != nil {
+		tx.Rollback() // 回滚事务
+		return err
+	}
+
+	tx.Commit() // 提交事务
 
 	return nil
 }
