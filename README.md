@@ -104,7 +104,7 @@ type User struct {
 	DouyinNum     string `json:"douyin_num"` //抖音号
 	Name          string `json:"name"`
 	Password      string `json:"password"`
-	TotalFavorite int    `json:"totalFavorite"` //获赞总数
+	TotalFavorited int    `json:"totalFavorite"` //获赞总数
 	FavoriteCount int    `json:"favoriteCount"` //点赞总数
 	WorkCount  int    `json:"articleCount"`  //视频总数
 	Likes         []Like `json:"likes"`         //喜欢列表
@@ -175,19 +175,64 @@ likes
 ## 数据库关系图
 
 
-# 用户 User
 
-## 密码加密存储
+### 鉴权
 
-我们使用哈希函数对密码进行哈希处理，然后将哈希值存储在数据库中。当用户登录时，将其提供的密码与数据库中的哈希值进行比对，以验证密码的正确性。这样可以保证密码的安全性以保证密码不会被泄露。
+### 视频流接口：douyin/feed/
 
-我们使用了 bcrypt 算法对密码进行哈希和加盐处理，这是一种常见且安全的方式。
+### User---用户信息表：/user/
 
-# 喜欢 Like
+#### 用户注册：/user/register/
 
-## 喜欢点赞/取消点赞
+#### 用户登录：/user/login/
 
-点赞时查找数据库的所有喜欢列表
+#### 用户信息处理：
+
+### publish---发布
+
+#### 发布视频：/publish/action/
+
+#### 获取发布视频列表：/publish/list/
+
+根据用户id查找posts数据库中该用户发布的视频信息
+
+```go
+// GetPostList 根据用户id，查找posts表中该用户发布是视频列表，存储成切片格式
+func GetPostList(userId uint) ([]models.Post, error) {
+	var postList []models.Post
+	err := database.DB.Table("posts").Where("user_id = ?", userId).Find(&postList).Error
+	return postList, err
+}
+```
+然后根据视频信息中对应的视频id，查找videos数据库中对应的视频信息，并将视频信息转换成前端需要的格式
+```go
+// 转换成前端格式的video
+front_postList := make([]common.Video, len(postList))
+for i, post := range postList {
+    video, _ := Handlers.GetVideoInformation(post.CreatedVideo)
+    // 视频信息转换成前端需要的视频格式
+    front_postList[i] = Handlers.VideoInformationFormatConversion(video)
+}
+```
+
+### like---喜欢列表
+
+#### 点赞操作：/favorite/action/
+
+开启事务：
+
+```go
+tx := database.DB.Begin()
+```
+
+点赞时先实例化当前喜欢信息，然后查找数据库的所有喜欢列表
+
+```go
+giveLike := models.Like{
+    UserID:    userId,
+    LikeVideo: videoId,
+}
+```
 
 如果数据库没有这条喜欢的信息就是点赞：
 
@@ -197,10 +242,112 @@ likes
 
 - 那么对应的视频发布者的被点赞数和当前用户的点赞总数和视频被点赞数都会减少
 
-## 喜欢列表
+```go
+// 事物操作，调用service层，根据点赞或是取消点赞进行相应函数的调用
+if service.LikeExit(userId, videoId) { // 不存在，就是点赞
+    if err := service.CreateLikeTx(tx, giveLike); err != nil {
+        tx.Rollback() // 回滚事务
+        return err
+    }
+    
+    if err := service.OperateVideoFavorite_countTx(tx, videoId, 1); err != nil {
+        tx.Rollback() // 回滚事务
+        return err
+    }
+    
+    if err := service.OperateUserFavoriteCountTx(tx, userId, 1); err != nil {
+        tx.Rollback() // 回滚事务
+        return err
+    }
+    
+    creatorId, err := service.GetVideoAuthor(videoId)
+    if err != nil {
+        tx.Rollback() // 回滚事务
+        return err
+    }
+    
+    if err := service.OperateCreatorTotalFavoritedTx(tx, creatorId, 1); err != nil {
+        tx.Rollback() // 回滚事务
+        return err
+    }
+} else { // 取消点赞
+    if err := service.DeleteLikeTx(tx, giveLike); err != nil {
+        tx.Rollback() // 回滚事务
+        return err
+    }
+    
+	//........同上只是最后一个参数改为-1
+}
+tx.Commit() // 提交事务
+return nil
+```
+
+#### 获取点赞视频列表：/favorite/list/
 
 在数据库中的喜欢列表查找当前用户的所有喜欢视频，存储在切片数组中返回给前端
 
+```go
+// 从数据库查询喜欢列表
+func GetLikeList(userId uint) ([]models.Video, error) {
+	// 查询当前id用户的所有点赞信息
+	likeList, _ := service.GetLikeList(userId)
+
+	var videoList []models.Video
+	// 根据点赞信息，查找对应的视频信息
+	for _, like := range likeList {
+		// 根据视频ID查找对应视频信息
+		video, _ := service.FindVideo(like.LikeVideo)
+		videoList = append(videoList, video)
+	}
+	return videoList, nil
+}
+```
+
+#### 格式转换
+
+将返回的视频数据替换成前端的版本
+```go
+// 转换成前端格式的video
+front_videoList := make([]common.Video, len(videoList))
+for i, video := range videoList {
+    // 视频信息转换成前端需要的视频格式
+    front_videoList[i] = Handlers.VideoInformationFormatConversion(video)
+}
+```
+
+```go
+// VideoInformationFormatConversion 将视频信息转换成前端格式的视频信息
+func VideoInformationFormatConversion(hostvideo models.Video) common.Video {
+	var newvideo common.Video
+	// 根据视频的发布者id找到对应发布者的信息
+	author, _ := service.GetUser(hostvideo.VideoCreator)
+
+	newvideo.Id = int64(hostvideo.ID)
+	newvideo.FavoriteCount = int64(hostvideo.FavoriteCount)
+	// 并转换成前端需要的用户信息
+	newvideo.Author = UserInformationFormatConversion(author)
+	newvideo.PlayUrl = hostvideo.PlayUrl
+	newvideo.CoverUrl = hostvideo.CoverUrl
+	newvideo.CommentCount = int64(hostvideo.CommentCount)
+	newvideo.IsFavorite = false
+	newvideo.Title = hostvideo.Title
+	return newvideo
+}
+```
+
+### comment--评论
+
+#### 发布评论：/comment/action/
+
+#### 获取视频评论：/comment/list/
+
+
+
+
+
+我们使用哈希函数对密码进行哈希处理，然后将哈希值存储在数据库中。当用户登录时，将其提供的密码与数据库中的哈希值进行比对，以验证密码的正确性。这样可以保证密码的安全性以保证密码不会被泄露。
+
+我们使用了 bcrypt 算法对密码进行哈希和加盐处理，这是一种常见且安全的方式。
 
 # 架构
 

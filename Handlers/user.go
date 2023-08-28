@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"github.com/RaymondCode/simple-demo/common"
+	"github.com/RaymondCode/simple-demo/database"
 	"github.com/RaymondCode/simple-demo/middleware"
 	"github.com/RaymondCode/simple-demo/models"
 	"github.com/RaymondCode/simple-demo/service"
@@ -125,7 +126,7 @@ func UserInformationFormatConversion(hostuser models.User) common.User {
 	newuser.Id = hostuser.ID
 	newuser.DouyinNum = hostuser.DouyinNum
 	newuser.Name = hostuser.Name
-	newuser.TotalFavorite = hostuser.TotalFavorite
+	newuser.TotalFavorite = hostuser.TotalFavorited
 	newuser.FavoriteCount = hostuser.FavoriteCount
 	newuser.WorkCount = hostuser.ArticleCount
 

@@ -46,18 +46,18 @@ func DeleteLike(like models.Like) error {
 
 // 事务
 // 操作当前用户的点赞总数
-func OperateUserFavoriteCountTx(tx *gorm.DB, HostId uint, cnt int) error {
+func OperateUserFavoriteCountTx(tx *gorm.DB, userId uint, cnt int) error {
 	err := tx.Model(&models.User{}).
-		Where("id=?", HostId).
-		Update("favorite_count", gorm.Expr("favorite_count+?", cnt)).Error
+		Where("id=?", userId).
+		Update("favorite_count", gorm.Expr("favorite_count + ?", cnt)).Error
 	return err
 }
 
 // 操作视频创作者的被点赞总数
-func OperateCreatorTotalFavoritedTx(tx *gorm.DB, HostId uint, cnt int) error {
+func OperateCreatorTotalFavoritedTx(tx *gorm.DB, creatorId uint, cnt int) error {
 	err := tx.Model(&models.User{}).
-		Where("id=?", HostId).
-		Update("total_favorite", gorm.Expr("total_favorite+?", cnt)).Error
+		Where("id=?", creatorId).
+		Update("total_favorite", gorm.Expr("total_favorite + ?", cnt)).Error
 	return err
 }
 
@@ -96,14 +96,6 @@ func LikeExit(userId uint, videoId uint) bool {
 func GetLikeList(userId uint) ([]models.Like, error) {
 	var likeList []models.Like
 	err := database.DB.Table("likes").
-		Where("user_id=?", userId).Find(&likeList).Error
-	return likeList, err
-}
-
-// 查询当前id用户的所有点赞信息（在事务中执行）
-func GetLikeListInTransaction(tx *gorm.DB, userId uint) ([]models.Like, error) {
-	var likeList []models.Like
-	err := tx.Table("likes").
 		Where("user_id=?", userId).Find(&likeList).Error
 	return likeList, err
 }

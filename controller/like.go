@@ -57,7 +57,6 @@ func FavoriteList(c *gin.Context) {
 	}
 
 	//函数调用及响应
-	//videoList, err := Handlers.GetLikeList(userIdNew)
 	videoList, err := Handlers.GetLikeList(userIdNew)
 	// 转换成前端格式的video
 	front_videoList := make([]common.Video, len(videoList))

@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"github.com/RaymondCode/simple-demo/Handlers"
 	"github.com/RaymondCode/simple-demo/common"
 	"github.com/gin-gonic/gin"
