@@ -126,7 +126,7 @@ func UserInformationFormatConversion(hostuser models.User) common.User {
 	newuser.Id = hostuser.ID
 	newuser.DouyinNum = hostuser.DouyinNum
 	newuser.Name = hostuser.Name
-	newuser.TotalFavorite = hostuser.TotalFavorited
+	newuser.TotalFavorite = hostuser.TotalFavorite
 	newuser.FavoriteCount = hostuser.FavoriteCount
 	newuser.WorkCount = hostuser.ArticleCount
 
