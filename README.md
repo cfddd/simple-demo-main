@@ -1,21 +1,37 @@
-# simple-demo
+# 抖音项目服务端
+## 抖音项目服务端运行说明
 
-## 抖音项目服务端简单示例
+### go框架需求
+需要gin,gorm和mysql驱动
+```shell
+go get -u github.com/gin-gonic/gin
+go get -u github.com/jinzhu/gorm
+go get -u github.com/go-sql-driver/mysql
+```
+### mysql配置
+在`database/iniMYSQL.go`文件中有如下内容
+```go
+username := "root"   //用户名
+password := "123456" //密码
+host := "127.0.0.1"  //数据库地址，可以是IP或者域名
+port := 3306         //端口号
+Dbname := "douyin"   //数据库名
+timeout := "10s"     //超时连接，10秒
+```
+根据自己的mysql配置信息链接
 
-具体功能内容参考飞书说明文档
+创建一个名为douyin的数据库
 
-工程无其他依赖，直接编译运行即可
+然后运行该文件
+### 添加环境变量
+使用到的ffmpeg软件通过添加一个环境变量由程序调用
 
+ffmpeg  软件所在据对位置目录
+
+### 构建并运行代码
 ```shell
 go build && ./simple-demo
 ```
-
-### 功能说明
-
-接口功能不完善，仅作为示例
-
-* 用户登录数据保存在内存中，单次运行过程中有效
-* 视频上传后会保存到本地 public 目录中，访问时用 127.0.0.1:8080/static/video_name 即可
 
 ### 测试
 
@@ -23,44 +39,57 @@ test 目录下为不同场景的功能测试case，可用于验证功能实现�
 
 其中 common.go 中的 _serverAddr_ 为服务部署的地址，默认为本机地址，可以根据实际情况修改
 
-测试数据写在 demo_data.go 中，用于列表接口的 mock 测试
-
-# 安排
-参考https://github.com/ACking-you/byte_douyin_project
-
-后端架构分为三层
-- Handlers
-- Service
-- Models
-
-
-代码只给了接口，也就是Service，对应的就是controller文件加下的目录
-
-- controller
-- Handlers
-- Models
-
-接口注册在了router.go文件
-
-所以我们要做的就是Models，和Handlers
-
-## Models
-很简单，就是数据库表设计的结构体
-
-消息传递的结构体等等
-
-## Handlers
-操作
-
-# 时间
-
-我加了组长群，暂时还没有答辩日期，应该在这个月之内吧
-我们一个星期内爆肝完
-
-# 方向
+Aliyun OSS SDK for Go.go用于测试阿里云OSS
+# 项目方向选择
 https://bytedance.feishu.cn/docx/BhEgdmoI3ozdBJxly71cd30vnRc
-社交方向
 
+**社交方向**
+# 项目架构
+按照controller，Handlers，Service自上而下
+
+对应着数据接收，数据处理，数据存储
+
+这三层按照这样的顺序调用：
+>controller层调用Handlers层
+>
+>Handlers层调用Service层
+
+其他的都在这个顺序的基础上调用，避免了出现循环导包的现象
+## 详细说明
+| 层级名称            | 功能         |
+|-----------------|------------|
+| middleware(中间件) | jwt登录信息验证  |
+| common(前端数据格式)  | 返回给前端的数据格式 |
+| controller(接口层) | 负责和前端消息的交互 |
+| Handlers(逻辑处理层) | 处理相关的业务逻辑  |
+| service(数据库调用层) | 数据库的增删改查函数 |
+| Models(数据库模型层)  | 数据库的存储模型   |
+下面是项目各层级的详细介绍
+
+### Middleware (中间件):
+负责处理请求和响应之间的中间业务逻辑。
+
+在请求到达控制器之前，中间件可以执行一些预处理逻辑，例如身份验证、权限检查、日志记录等。
+### Common (前端数据格式):
+定义和管理前端数据的格式和结构。
+
+包含定义前端请求和响应的数据格式、错误处理、返回给前端的数据格式等。
+### Controller (接口层):
+处理和前端消息的交互，负责接收和响应前端的请求。
+
+解析前端请求，调用适当的处理程序或服务来执行业务逻辑，并将结果返回给前端。
+### Handlers (逻辑处理层):
+处理相关的业务逻辑。
+
+包含具体的业务逻辑实现，根据业务需求处理请求，并与服务层进行交互。
+### Service (数据库调用层):
+执行数据库的增删改查操作。
+
+提供与数据库进行交互的函数和方法，包括读取和写入数据、查询数据、更新数据等。
+### Models (数据库模型层):
+定义数据库的存储模型。
+
+包含与数据库表或文档对应的模型定义，定义数据的结构和关系，以及与数据库的交互方法。
 
 # 表结构
 ## 全局模型
@@ -356,17 +385,21 @@ func CreateTokenUsingHs256(userid uint, username string) (string, error) {
 
 #### 发布视频：/publish/action/
 
-处理文件名->保存视频信息在saveFile路径->保存视频第1帧在视频相同路径，生成的图片自动加上.png后缀->在数据库中保存视频信息->上传视频文件和视频封面图片到OSS->删除保存在本地的视频和视频封面图片->在对应数据库添加对应发布视频的信息
+1. 处理文件名
+2. 保存视频信息在saveFile路径
+3. 保存视频第1帧在视频相同路径，生成的图片自动加上.png后缀
+4. 在数据库中保存视频信息，包括视频和封面的URL
+5. 上传视频文件和视频封面图片到OSS
+6. 删除保存在本地的视频和视频封面图片
+7. 在对应数据库添加对应发布视频的信息
 
-基本功能完成
-/douyin/publish/action/ - 视频投稿
-登录用户选择视频上传。
+关于视频封面的生成：
 
-使用了ffmpeg把上传视频的第1帧作为视频封面
-然后把视频和图片先暂存在本地public下，再上传到阿里云OSS
-视频的名称就是user.Id+filename
-封面名称就是user.Id+filename+.png
-例如test.mp4,封面是test.mp4/png
+1. 使用了ffmpeg把上传视频的第1帧作为视频封面
+2. 然后把视频和图片先暂存在本地public下，再上传到阿里云OSS
+3. 视频的名称就是user.Id+filename
+4. 封面名称就是user.Id+filename+.png
+5. 例如test.mp4,封面是test.mp4/png
 
 ```go
 // 处理文件名
@@ -718,35 +751,24 @@ func GetCommentList(videoId int64) (CommentList []common.Comment) {
 	return
 }
 ```
-
-
-
-# 架构
-
-这三层按照这样的顺序调用：
->controller层调用Handlers层
->
->Handlers层调用Service层
-
-## 添加一个环境变量
-ffmpeg
-值为ffmpeg.exe的绝对路径
-## 封面获取
-先把视频存到本地，再调用ffmpeg得到图片文件，然后上传
-因为ffmpeg.input只能是本地的文件
-
-## videoPublish 
-
-
 ## 阿里云相关配置
 在权限控制里面的读写权限需要修改
 默认是私有，可以改为readOnly
 
-只是测试了一次，就把对象存储OSS流量（只有2GB）用完了
-还挺贵的，49元/100GB/月
+只是测试了一次，就把对象存储免费的OSS流量（只有2GB）用完了
+后续套餐续费还挺贵的，49元/100GB/月
 
 暂时先不测试，因为前端没有缓存已有的视频数据，每次都要下载才行，就导致流量用量很大
 继续用demo视频
 
+将读写权限改回私有的，就可以随意测试除了播放视频的功能
+
+发布视频上传的流量很多，完全够用
+
+但是公网的下行流量很少，且很贵
+
+前端应该缺少缓存视频的功能
+
 ## bug收集
 1. 用户的信息只在用户登陆的时候获取？
+    经过多次测试，确实是这样
