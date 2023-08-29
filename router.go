@@ -27,10 +27,10 @@ func initRouter(r *gin.Engine) {
 	apiRouter.GET("/comment/list/", controller.CommentList)                                      //必写，打开评论区显示所有评论
 
 	// extra apis - II
-	apiRouter.POST("/relation/action/", controller.RelationAction)
-	apiRouter.GET("/relation/follow/list/", controller.FollowList)
-	apiRouter.GET("/relation/follower/list/", controller.FollowerList)
-	apiRouter.GET("/relation/friend/list/", controller.FriendList)
+	//apiRouter.POST("/relation/action/", controller.RelationAction)
+	//apiRouter.GET("/relation/follow/list/", controller.FollowList)
+	//apiRouter.GET("/relation/follower/list/", controller.FollowerList)
+	//apiRouter.GET("/relation/friend/list/", controller.FriendList)
 	//apiRouter.GET("/message/chat/", controller.MessageChat)
 	//apiRouter.POST("/message/action/", controller.MessageAction)
 }
