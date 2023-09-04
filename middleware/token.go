@@ -101,7 +101,5 @@ func VerifyUserLogin() gin.HandlerFunc {
 		//设置上下文的用户信息
 		c.Set("username", token.UserName)
 		c.Set("user_id", token.UserID)
-
-		//c.Next()
 	}
 }

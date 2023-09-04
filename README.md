@@ -308,184 +308,232 @@ likes
 ```
 
 ### 数据库关系图
+![img.png](img.png)
 
-看到这句话请删掉
+## 代码解释
 
-#### 鉴权
+#### jwt鉴权
 
-token验证:
+首先创建一个带用户信息的实体：
 ```go
-// VerifyTokenHs256 验证 token
-// 这段代码的目的是对令牌进行完整的解析、验证和类型转换，确保令牌是有效的，并且可以安全地使用其中的声明数据。
-func VerifyTokenHs256(tokenString string) (*MyCustomClaims, error) {
-	//将 tokenString 转化成 MyCustomClaims 的实例
-	token, err := jwt.ParseWithClaims(tokenString, &MyCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(Key), nil //返回签名密钥
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	//判断token是否有效
-	if !token.Valid {
-		return nil, errors.New("claim invalid")
-	}
-
-	claims, ok := token.Claims.(*MyCustomClaims)
-	if !ok {
-		return nil, errors.New("invalid claim type")
-	}
-
-	return claims, nil
+type MyCustomClaims struct {
+	UserID   uint
+	UserName string
+	jwt.StandardClaims
 }
 ```
 
-token超时判断:
+创建 token ：
 ```go
-//token超时
-if token.ExpiresAt < time.Now().Unix() {
-    c.JSON(http.StatusOK, common.Response{
-        StatusCode: 402,
-        StatusMsg:  "令牌过期",
-    })
-    c.Abort() //拦截
-    return
+claim := MyCustomClaims{
+	UserID:   userid,
+	UserName: username,
+	StandardClaims: jwt.StandardClaims{
+		Issuer:    "hdheid",                              //签发者
+		Subject:   "usertoken",                           //签发对象
+		IssuedAt:  time.Now().Unix(),                     //签发时间：当前
+		ExpiresAt: time.Now().Add(48 * time.Hour).Unix(), //过期时间：48小时后
+	},
+}
+token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claim).SignedString([]byte(Key))
+return token, err
+```
+给实体赋值，然后使用 jwt-go 包的 NewWithClaims 和 SignedString 函数进行 token 的生成。
+`[]byte(Key)` 是将字符串类型的密钥转化为切片类型。
+
+验证 token
+用来判断 token 是否有效。
+
+获取token：
+```go
+//将 tokenString 转化成 MyCustomClaims 的实例
+token, err := jwt.ParseWithClaims(tokenString, &MyCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+    return []byte(Key), nil //返回签名密钥
+})
+```
+
+判断 token 是否有效：
+```go
+//判断token是否有效
+if !token.Valid {
+	return nil, errors.New("claim invalid")
+}
+
+claims, ok := token.Claims.(*MyCustomClaims)
+if !ok {
+	return nil, errors.New("invalid claim type")
 }
 ```
 
-设置上下文的用户信息:
+设置全局中间件，用来判断用户的登陆状态：
 ```go
-//设置上下文的用户信息
-c.Set("username", token.UserName)
-c.Set("user_id", token.UserID)
-```
-
-
-#### 视频流接口：/feed/
-
-获取视频流
-```go
-// FeedGive 获取 feed 的需要的视频列表，并且返回当前视频最早的创作时间，以便下次使用时不会重复
-func FeedGive(token, lastTime string) ([]common.Video, int64) {
-	//验证用户登陆信息
-	tokenStruct, err := middleware.VerifyTokenHs256(token)
-
-	//视频列表开始时间（以视频创作时间来比较）
-	startTime, err := strconv.ParseInt(lastTime, 10, 64)
-	if err != nil {
-		startTime = time.Now().Unix()
-	}
-
-	//如果视频列表循环完毕，将重新循环
-	videoList, err := service.FeedFrom(startTime)
-	if err != nil || len(videoList) == 0 {
-		return nil, time.Now().Unix()
-	}
-
-	//将下一次返回的时间戳修改为最早的视频创建时间
-	videoListLen := len(videoList)
-	nextTime := videoList[videoListLen-1].CreatedAt.Unix()
-
-	//将获取到的视频数据修改为前端响应的格式
-	videoListToFeed := make([]common.Video, videoListLen)
-	for i, video := range videoList {
-		videoListToFeed[i] = VideoInformationFormatConversion(video)
-		//判断当前浏览用户是否点赞该视频
-		if tokenStruct != nil {
-			//如果存在该点赞记录，则 IsFavorite 为真
-			if !service.LikeExit(tokenStruct.UserID, video.ID) {
-				videoListToFeed[i].IsFavorite = true
-			}
-		}
-	}
-
-	return videoListToFeed, nextTime
+//获取token
+tokenString := c.Query("token")
+if tokenString == "" {
+	tokenString = c.PostForm("token")
 }
 ```
 
-如果视频列表循环完毕，将重新循环:
+各种无效的 token ：
 ```go
-func FeedFrom(startTime int64) ([]models.Video, error) {
-	//将时间戳转化为标准时间格式以便查询数据库
-	tm := time.Unix(startTime, 0)
-	timeStr := tm.Format("2006-01-02 15:04:05")
+//用户不存在
+if tokenString == "" {
+	c.JSON(http.StatusOK, common.Response{
+            StatusCode: 401,
+            StatusMsg:  "用户不存在",
+		})
+	    c.Abort() //拦截
+        return
+    }
 
-	var videoList []models.Video
-	err := database.DB.Where("created_at <= ?", timeStr).Order("created_at DESC").Limit(4).Find(&videoList).Error
+    //token验证
+    token, err := VerifyTokenHs256(tokenString)
+    if err != nil {
+        c.JSON(http.StatusOK, common.Response{
+            StatusCode: 403,
+            StatusMsg:  "验证失败",
+        })
+        c.Abort() //拦截
+        return
+    }
 
-	//将查询到的数据返回
-	return videoList, err
-}
+    //token超时
+    if token.ExpiresAt < time.Now().Unix() {
+        c.JSON(http.StatusOK, common.Response{
+            StatusCode: 402,
+            StatusMsg:  "令牌过期",
+        })
+        c.Abort() //拦截
+        return
+    }
 ```
 
+成功判断 token 后，设置用户的上下文信息：
+```go
+    //设置上下文的用户信息
+    c.Set("username", token.UserName)
+    c.Set("user_id", token.UserID)
+```
 
-
-#### User---用户信息表：/user/
+#### user---用户
 
 ##### 用户注册：/user/register/
 
-将密码哈希处理:
+判断用户是否存在->将密码哈希处理后存在数据库->创建 token ->将数据返回
+```go
+//判断用户是否存在
+if _, exist := Handlers.UserExist(username); exist {
+    c.JSON(http.StatusOK, common.UserRegisterResponse{
+        Response: common.Response{
+            StatusCode: 1,
+            StatusMsg:  "用户已经存在",
+        },
+    })
+    return
+}
+
+//将密码哈希处理后存在数据库
+passwordHashed, err := PasswordHash(password)
+
+//创建token
+token, err := middleware.CreateTokenUsingHs256(user.ID, user.Name)
+
+//将数据返回
+userResponse := common.UserResponse{
+    UserId: user.ID,
+    Token:  token,
+}
+//返回token
+return userResponse, nil
+```
+
+**将密码哈希处理**:
 
 我们使用哈希函数对密码进行哈希处理，然后将哈希值存储在数据库中。当用户登录时，将其提供的密码与数据库中的哈希值进行比对，以验证密码的正确性。这样可以保证密码的安全性以保证密码不会被泄露。
 
 我们使用了 bcrypt 算法对密码进行哈希和加盐处理，这是一种常见且安全的方式。
 ```go
-// PasswordHash 用户密码加密函数
-func PasswordHash(password string) (string, error) {
-	//对密码进行哈希处理
-	PasswordHashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return "", err
-	}
-	return string(PasswordHashed), nil
-}
-```
-
-创建token:
-```go
-// CreateTokenUsingHs256 创建一个 token
-func CreateTokenUsingHs256(userid uint, username string) (string, error) {
-	claim := MyCustomClaims{
-		UserID:   userid,
-		UserName: username,
-		StandardClaims: jwt.StandardClaims{
-			Issuer:    "hdheid",                              //签发者
-			Subject:   "usertoken",                           //签发对象
-			IssuedAt:  time.Now().Unix(),                     //签发时间：当前
-			ExpiresAt: time.Now().Add(48 * time.Hour).Unix(), //过期时间：48小时后
-		},
-	}
-	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claim).SignedString([]byte(Key))
-	return token, err
-}
+//对密码进行哈希处理
+PasswordHashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 ```
 
 ##### 用户登录：/user/login/
 
-查询用户是否存在->检验密码是否正确->创建token->返回响应数据
-
-创建token:
+查询用户是否存在->检验密码是否正确->创建 token ->将数据返回
 ```go
-// CreateTokenUsingHs256 创建一个 token
-func CreateTokenUsingHs256(userid uint, username string) (string, error) {
-	claim := MyCustomClaims{
-		UserID:   userid,
-		UserName: username,
-		StandardClaims: jwt.StandardClaims{
-			Issuer:    "hdheid",                              //签发者
-			Subject:   "usertoken",                           //签发对象
-			IssuedAt:  time.Now().Unix(),                     //签发时间：当前
-			ExpiresAt: time.Now().Add(48 * time.Hour).Unix(), //过期时间：48小时后
-		},
-	}
-	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claim).SignedString([]byte(Key))
-	return token, err
+//查询用户是否存在
+user, err := service.UseFind(username)
+
+//检验密码是否正确
+err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+
+//创建token
+token, err := middleware.CreateTokenUsingHs256(user.ID, user.Name)
+
+//返回响应数据
+userResponse := common.UserResponse{
+    UserId: user.ID,
+    Token:  token,
 }
+return userResponse, nil
+```
+`CompareHashAndPassword` 是一个用于比较密码哈希值和明文密码是否匹配的函数。
+
+##### 用户信息处理：/user/login/
+获取用户 id ->通过用户 id 查找用户信息->将数据返回
+```go
+//获取用户信息
+UserID := c.Query("user_id")
+newuser, err := Handlers.GetUserInfo(UserID)
+
+//通过 userid 获取用户信息
+user, err := service.GetUser(id)
+if err != nil {
+    return common.User{}, err
+}
+newuser := UserInformationFormatConversion(user)
+
+return newuser, nil
 ```
 
-##### 用户信息处理：
+##### 视频流接口：/feed/
+通过前端传来的时间戳获取固定长度的视频列表->如果视频列表循环完毕将重新循环->获取最早视频时间戳用来返回给前端->进行格式转换->将数据返回
+```go
+//验证用户登陆信息
+tokenStruct, err := middleware.VerifyTokenHs256(token)
 
+//视频列表开始时间（以视频创作时间来比较）
+startTime, err := strconv.ParseInt(lastTime, 10, 64)
+if err != nil {
+    startTime = time.Now().Unix()
+}
 
+//如果视频列表循环完毕，将重新循环
+videoList, err := service.FeedFrom(startTime)
+if err != nil || len(videoList) == 0 {
+    return nil, time.Now().Unix()
+}
+
+//将下一次返回的时间戳修改为最早的视频创建时间
+videoListLen := len(videoList)
+nextTime := videoList[videoListLen-1].CreatedAt.Unix()
+
+//将获取到的视频数据修改为前端响应的格式
+videoListToFeed := make([]common.Video, videoListLen)
+for i, video := range videoList {
+    videoListToFeed[i] = VideoInformationFormatConversion(video)
+    //判断当前浏览用户是否点赞该视频
+    if tokenStruct != nil {
+        //如果存在该点赞记录，则 IsFavorite 为真
+        if !service.LikeExit(tokenStruct.UserID, video.ID) {
+            videoListToFeed[i].IsFavorite = true
+        }
+    }
+}
+
+//将数据返回
+return videoListToFeed, nextTime
+```
 
 #### publish---发布
 
