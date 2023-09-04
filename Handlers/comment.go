@@ -2,16 +2,94 @@ package Handlers
 
 import (
 	"github.com/RaymondCode/simple-demo/common"
+	"github.com/RaymondCode/simple-demo/database"
 	"github.com/RaymondCode/simple-demo/models"
 	"github.com/RaymondCode/simple-demo/service"
 )
 
-func AddComment(comment common.CommentRequest, userId int64) error {
-	return service.AddComment(models.Comment{
+func AddComment(comment common.CommentRequest, userId int64) (err error) {
+	err = service.AddComment(models.Comment{
 		VideoID:    uint(comment.VideoId),
 		ReviewUser: uint(userId),
 		Content:    comment.CommentText,
 	})
+	if err != nil {
+		return err
+	}
+
+	err = service.ChangeVideoCommentCount(uint(comment.VideoId), 1)
+	if err != nil {
+		return err
+	}
+
+	return
+}
+
+func DeleteComment(commentID int64) (err error) {
+	err = service.DeleteComment(uint(commentID))
+	if err != nil {
+		return err
+	}
+
+	err = service.ChangeVideoCommentCount(uint(commentID), -1)
+	if err != nil {
+		return err
+	}
+
+	return
+}
+
+// 增加事务
+func AddCommentWithTransaction(comment common.CommentRequest, userId int64) (err error) {
+	tx := database.DB.Begin() // 开启事务
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback() // 发生错误时回滚事务
+		}
+	}()
+
+	err = service.AddCommentWithTransaction(tx, models.Comment{
+		VideoID:    uint(comment.VideoId),
+		ReviewUser: uint(userId),
+		Content:    comment.CommentText,
+	})
+	if err != nil {
+		tx.Rollback() // 发生错误时回滚事务
+		return err
+	}
+
+	err = service.ChangeVideoCommentCountWithTransaction(tx, uint(comment.VideoId), 1)
+	if err != nil {
+		tx.Rollback() // 发生错误时回滚事务
+		return err
+	}
+
+	err = tx.Commit().Error // 提交事务
+	return err
+}
+
+func DeleteCommentWithTransaction(commentID int64, videoID int64) (err error) {
+	tx := database.DB.Begin() // 开启事务
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback() // 发生错误时回滚事务
+		}
+	}()
+
+	err = service.DeleteCommentWithTransaction(tx, uint(commentID))
+	if err != nil {
+		tx.Rollback() // 发生错误时回滚事务
+		return err
+	}
+
+	err = service.ChangeVideoCommentCountWithTransaction(tx, uint(videoID), -1)
+	if err != nil {
+		tx.Rollback() // 发生错误时回滚事务
+		return err
+	}
+
+	err = tx.Commit().Error // 提交事务
+	return err
 }
 
 func GetCommentList(videoId int64) (CommentList []common.Comment) {

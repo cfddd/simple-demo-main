@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	client, err := oss.New("oss-cn-beijing.aliyuncs.com", "LTAI5t7Sm8h5LBiy6jCuNQ3B", "C45iWvAfDPxwDh7u5lmS4O65PpKCmr")
+	client, err := oss.New("oss-cn-beijing.aliyuncs.com", "LTAI5tHp6aydxJq2aRQhENML", "R4TnXnklJ9Qpmzgi8RdXqu7bsvpLSD")
 	if err != nil {
 		// HandleError(err)
 	}

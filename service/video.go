@@ -7,13 +7,18 @@ import (
 )
 
 //@function: addVideo
-//@description: 发布视频
+//@description: 发布视频,返回创建的videoId
 //@param: u models.video
-//@return: err error
+//@return: err error,videoId uint
 
-func AddVideo(u models.Video) (err error) {
-	return database.DB.Create(&u).Error
+func AddVideo(u models.Video) (videoId uint, err error) {
+	err = database.DB.Table("videos").Create(&u).Error
+	if err != nil {
+		return 0, err
+	}
+	videoId = u.ID
 
+	return
 }
 
 //@function: deleteVideo
@@ -22,7 +27,7 @@ func AddVideo(u models.Video) (err error) {
 //@return: err error
 
 func DeleteVideo(id uint) (err error) {
-	return database.DB.Where("id = ?", id).Delete(&models.Video{}).Error
+	return database.DB.Table("videos").Where("id = ?", id).Delete(&models.Video{}).Error
 }
 
 //@function: updateVideo
@@ -68,4 +73,19 @@ func FindVideoList(userId uint) ([]models.Video, error) {
 	var videoList []models.Video
 	err := database.DB.Table("videos").Where("video_creator = ?", userId).Find(&videoList).Error
 	return videoList, err
+}
+
+//@function: changeVideoCommentCount
+//@description: 给视频的评论数CommentCount+x
+//@param: commentId uint,x int
+//@return: err error
+
+func ChangeVideoCommentCount(commentId uint, x int) (err error) {
+	return database.DB.Model(&models.Video{}).Where("id = ?", commentId).Update("comment_count", gorm.Expr("comment_count + ?", x)).Error
+}
+
+// ChangeVideoCommentCountWithTransaction 根据视频的videoID，修改这个视频对印的comment_count
+func ChangeVideoCommentCountWithTransaction(tx *gorm.DB, videoId uint, x int) (err error) {
+	err = tx.Model(&models.Video{}).Where("id = ?", videoId).Update("comment_count", gorm.Expr("comment_count + ?", x)).Error
+	return err
 }

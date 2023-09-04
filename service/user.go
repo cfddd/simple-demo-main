@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/RaymondCode/simple-demo/database"
 	"github.com/RaymondCode/simple-demo/models"
+	"gorm.io/gorm"
 )
 
 // UseFind 寻找是否存在该用户
@@ -36,4 +37,9 @@ func GetUser(userId uint) (models.User, error) {
 		return user, err
 	}
 	return user, nil
+}
+
+// IncreaseVideoCount 用户的视频发布数量+1
+func IncreaseVideoCount(userId uint) error {
+	return database.DB.Model(models.User{}).Where("id = ?", userId).Update("article_count", gorm.Expr("article_count + ?", 1)).Error
 }

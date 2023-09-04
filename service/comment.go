@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/RaymondCode/simple-demo/database"
 	"github.com/RaymondCode/simple-demo/models"
+	"gorm.io/gorm"
 )
 
 //@function: AddComment
@@ -14,6 +15,11 @@ func AddComment(u models.Comment) (err error) {
 	return database.DB.Create(&u).Error
 }
 
+func AddCommentWithTransaction(tx *gorm.DB, u models.Comment) (err error) {
+	err = tx.Create(&u).Error
+	return err
+}
+
 //@function: DeleteComment
 //@description: 删除评论
 //@param: id uint
@@ -21,6 +27,11 @@ func AddComment(u models.Comment) (err error) {
 
 func DeleteComment(id uint) (err error) {
 	return database.DB.Where("id = ?", id).Delete(&models.Comment{}).Error
+}
+
+func DeleteCommentWithTransaction(tx *gorm.DB, id uint) (err error) {
+	err = tx.Where("id = ?", id).Delete(&models.Comment{}).Error
+	return err
 }
 
 //@function: UpdateComment

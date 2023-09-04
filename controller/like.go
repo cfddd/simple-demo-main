@@ -23,7 +23,7 @@ func FavoriteAction(c *gin.Context) {
 	videoId, _ := strconv.ParseUint(videoIdStr, 10, 10)
 
 	//函数调用及响应
-	err := Handlers.FavoriteAction(userId, uint(videoId))
+	err := Handlers.FavoriteActionWithTransaction(userId, uint(videoId))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, common.Response{
 			StatusCode: 1,
@@ -57,10 +57,9 @@ func FavoriteList(c *gin.Context) {
 	}
 
 	//函数调用及响应
-	//videoList, err := Handlers.GetLikeList(userIdNew)
 	videoList, err := Handlers.GetLikeList(userIdNew)
 	// 转换成前端格式的video
-	var front_videoList []common.Video
+	front_videoList := make([]common.Video, len(videoList))
 	for i, video := range videoList {
 		// 视频信息转换成前端需要的视频格式
 		front_videoList[i] = Handlers.VideoInformationFormatConversion(video)

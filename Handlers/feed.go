@@ -36,7 +36,7 @@ func FeedGive(token, lastTime string) ([]common.Video, int64) {
 		//判断当前浏览用户是否点赞该视频
 		if tokenStruct != nil {
 			//如果存在该点赞记录，则 IsFavorite 为真
-			if !service.LikeExit(video.ID, tokenStruct.UserID) {
+			if !service.LikeExit(tokenStruct.UserID, video.ID) {
 				videoListToFeed[i].IsFavorite = true
 			}
 		}

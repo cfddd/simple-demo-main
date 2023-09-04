@@ -24,8 +24,8 @@ func Publish(c *gin.Context) {
 	userId, _ := c.Get("user_id")
 
 	//发布视频
+	//同时在post表中保存已发布视频信息
 	err = Handlers.Publish(data, title, userId.(uint))
-
 	if err != nil {
 		c.JSON(http.StatusOK, common.Response{
 			StatusCode: 1,
@@ -33,6 +33,7 @@ func Publish(c *gin.Context) {
 		})
 		return
 	}
+
 	c.JSON(http.StatusOK, common.Response{
 		StatusCode: 0,
 		StatusMsg:  "Your video uploaded successfully",
@@ -48,29 +49,30 @@ func PublishList(c *gin.Context) {
 	GuestId := uint(id)
 
 	// 根据用户id查找它所有发布的视频信息
-	videoList, _ := Handlers.GetVideoList(GuestId)
+	postList, err := Handlers.GetPostList(GuestId)
 
-	if len(videoList) == 0 {
+	if err != nil {
 		c.JSON(http.StatusOK, common.VideoListResponse{
 			Response: common.Response{
 				StatusCode: 1,
-				StatusMsg:  "null",
+				StatusMsg:  "没有视频",
 			},
 			VideoList: nil,
 		})
 	} else { //需要展示的列表信息
 		// 转换成前端格式的video
-		var front_videoList []common.Video
-		for i, video := range videoList {
+		front_postList := make([]common.Video, len(postList))
+		for i, post := range postList {
+			video, _ := Handlers.GetVideoInformation(post.CreatedVideo)
 			// 视频信息转换成前端需要的视频格式
-			front_videoList[i] = Handlers.VideoInformationFormatConversion(video)
+			front_postList[i] = Handlers.VideoInformationFormatConversion(video)
 		}
 		c.JSON(http.StatusOK, common.VideoListResponse{
 			Response: common.Response{
 				StatusCode: 0,
 				StatusMsg:  "success",
 			},
-			VideoList: front_videoList,
+			VideoList: front_postList,
 		})
 	}
 }
