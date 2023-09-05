@@ -1,6 +1,16 @@
 # 抖音项目服务端
+## 项目github地址
+
+https://github.com/cfddd/simple-demo-main
+
 ## 部署项目
 项目使用goland开发，最后部署在1024code平台上
+
+
+
+1024平台关闭后会自动结束运行，所以每次都要重新运行
+
+重新运行操作见下文
 ### 0.线上地址
 https://bytedance.feishu.cn/docx/NMneddpKCoXZJLxHePUcTzGgnmf
 下载这个软件，安装后打开
@@ -149,6 +159,19 @@ https://bytedance.feishu.cn/docx/BhEgdmoI3ozdBJxly71cd30vnRc
 ### 用户评论
 支持未登录用户查看视频下的评论列表，登录用户能够发表评论
 
+## 项目分工
+| 成员名称 | 接口成员分工                                                |
+|------|-------------------------------------------------------|
+| 高灵芝  | /favoriate/action/、/favoriate/list/、/publish/list 等接口 |
+| 刘浩   | /user/、/user/Register/、/user/login/ 、/feed/ 等接口       |
+| 常凤迪  | /publish/action/、 /comment/action/、/comment/list/ 等接口 |
+
+
+| 成员名称 | 其他分工           |
+|------|----------------|
+| 高灵芝  | 文档撰写、测试代码      |
+| 刘浩   | 文档撰写、测试代码      |
+| 常凤迪  | 文档撰写、部署代码在1024 |
 
 ## 项目架构
 按照controller，Handlers，Service自上而下
